@@ -1,0 +1,61 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}{{ watchlist.name }}{% endblock %}
+
+{% block module_content %}
+<p class="ps-crumb"><a href="{% url 'personalization:watchlist-list' %}">Mes listes</a></p>
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">{{ watchlist.name }}</h1>
+    <p class="ps-pagehead__lead">
+      {% if watchlist.description %}{{ watchlist.description }}<br>{% endif %}
+      {{ items|length }} contenu{{ items|length|pluralize }}. Réordonnez-les avec les flèches.
+    </p>
+  </div>
+  <div class="ps-pagehead__actions">
+    <a class="btn btn-secondary" href="{% url 'personalization:watchlist-edit' watchlist.pk %}">Renommer</a>
+    <a class="ps-linkbtn ps-linkbtn--danger" href="{% url 'personalization:watchlist-delete' watchlist.pk %}">Supprimer la liste</a>
+  </div>
+</header>
+
+{% if items %}
+  <ol class="ps-ranked">
+    {% for item in items %}
+      <li class="ps-ranked__item" id="item-{{ item.pk }}">
+        <div class="ps-mover" role="group" aria-label="Déplacer « {{ item.content }} »">
+          <form method="post" action="{% url 'personalization:watchlist-item-move' item.pk 'up' %}">
+            {% csrf_token %}
+            <button type="submit" class="ps-mover__btn" {% if forloop.first %}disabled{% endif %} aria-label="Monter">▲</button>
+          </form>
+          <span class="ps-ranked__num ps-ranked__num--small">{{ forloop.counter }}</span>
+          <form method="post" action="{% url 'personalization:watchlist-item-move' item.pk 'down' %}">
+            {% csrf_token %}
+            <button type="submit" class="ps-mover__btn" {% if forloop.last %}disabled{% endif %} aria-label="Descendre">▼</button>
+          </form>
+        </div>
+        <div class="ps-ranked__content">
+          {% include "personalization/_content_row.html" with kind=item.content_type obj=item.content q="" %}
+          <div class="ps-ranked__foot ps-ranked__foot--wide">
+            <form method="post" action="{% url 'personalization:watchlist-item-note' item.pk %}" class="ps-noteform">
+              {% csrf_token %}
+              <label class="ps-visually-hidden" for="{{ item.note_form.note.id_for_label }}">Note personnelle</label>
+              {{ item.note_form.note }}
+              <button type="submit" class="btn btn-secondary btn-sm">Enregistrer la note</button>
+            </form>
+            <form method="post" action="{% url 'personalization:watchlist-item-remove' item.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="ps-linkbtn ps-linkbtn--muted">Retirer de la liste</button>
+            </form>
+          </div>
+          <p class="ps-footnote">Ajouté le {{ item.added_at|date:"j F Y" }}</p>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <div class="ps-empty">
+    <p class="ps-empty__title">Cette liste est vide.</p>
+    <p><a href="{% url 'personalization:search' %}">Cherchez un contenu</a> et cliquez sur « À regarder plus tard » pour l'ajouter ici.</p>
+  </div>
+{% endif %}
+{% endblock %}

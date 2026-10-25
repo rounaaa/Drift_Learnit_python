@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.4rem;">{{ title }}</h1>
+        <p style="color: var(--text-muted);">Renseignez les informations de la catégorie.</p>
+    </div>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span style="color: var(--danger); margin-left: 2px;">*</span>{% endif %}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="form-error">⚠️ {{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        {% for error in form.non_field_errors %}<div class="alert-box alert-error">⚠️ {{ error }}</div>{% endfor %}
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">✓ {{ action_text }}</button>
+            <a href="{% url 'videos:category_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

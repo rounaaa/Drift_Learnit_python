@@ -1,0 +1,37 @@
+{% extends "personalization/base.html" %}
+{% load personalization_tags %}
+
+{% block page_title %}Contenus similaires : {{ obj.title }}{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <p class="ps-pagehead__kicker">Contenus similaires</p>
+    <h1 class="ps-pagehead__title">{{ obj.title }}</h1>
+    <p class="ps-pagehead__lead">
+      {% if kind == "video" %}Vidéo{% else %}Cours{% endif %}{% with category=obj|category_label %}{% if category %} en {{ category }}{% endif %}{% endwith %}.
+      {% with url=obj|detail_url %}{% if url %}<a href="{{ url }}">Ouvrir {% if kind == "video" %}la vidéo{% else %}le cours{% endif %}</a>{% endif %}{% endwith %}
+    </p>
+  </div>
+  <a class="btn btn-secondary" href="{% url 'personalization:search' %}">Retour à la recherche</a>
+</header>
+
+{% if ai_enabled %}
+  <p class="ps-ainote">L'IA compare le titre, la description, la catégorie et le niveau de chaque contenu (TF-IDF et similarité cosinus).</p>
+{% else %}
+  <p class="ps-notice">Contenus récents de la même catégorie. Installez scikit-learn pour une vraie comparaison par l'IA.</p>
+{% endif %}
+
+{% if items %}
+  <ol class="ps-rows">
+    {% for item in items %}
+      <li>{% include "personalization/_content_row.html" with kind=item.type obj=item.obj q="" show_list_menu=True relevance=item.percent relevance_label="Proximité" %}</li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <div class="ps-empty">
+    <p class="ps-empty__title">Aucun contenu assez proche pour le moment.</p>
+    <p><a href="{% url 'personalization:search' %}">Parcourir le catalogue</a></p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "personalization/base.html" %}
+{# Confirmation commune à toutes les suppressions (recherches, listes, synonymes). #}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block module_content %}
+<div class="ps-confirm">
+  <h1 class="ps-pagehead__title">{{ title }}</h1>
+  <p class="ps-confirm__name">{{ object_name }}</p>
+  {% if detail %}<p class="ps-pagehead__lead">{{ detail }}</p>{% endif %}
+  <p class="ps-pagehead__lead">Cette action est définitive.</p>
+  <form method="post" class="ps-confirm__actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{{ confirm_label }}</button>
+    <a class="ps-linkbtn" href="{{ cancel_url }}">Annuler</a>
+  </form>
+</div>
+{% endblock %}

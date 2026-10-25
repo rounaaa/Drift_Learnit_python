@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Supprimer {{ category.name }} — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem;">Supprimer la catégorie</h1>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Confirmez-vous la suppression de « <strong>{{ category.name }}</strong> » ? Une catégorie contenant des vidéos ne peut pas être supprimée.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" class="btn btn-danger">Supprimer</button>
+            <a href="{% url 'videos:category_detail' category.pk %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

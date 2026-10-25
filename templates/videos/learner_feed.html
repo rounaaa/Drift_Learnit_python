@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Fil de vidéos — LearnIt{% endblock %}
+
+{% block extra_css %}
+<style>
+    .video-feed {
+        max-width: 760px;
+        margin: 0 auto;
+    }
+    .feed-heading {
+        margin-bottom: 1.5rem;
+    }
+    .feed-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    .feed-video {
+        width: 100%;
+        max-height: 65vh;
+        aspect-ratio: 9 / 16;
+        object-fit: contain;
+        background: #0f172a;
+        border-radius: var(--radius-md);
+    }
+    .feed-description {
+        color: var(--text-muted);
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+    @media (max-width: 600px) {
+        .feed-card {
+            grid-template-columns: 1fr;
+        }
+        .feed-video {
+            max-height: 60vh;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="video-feed">
+    <header class="feed-heading">
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.3rem;">🎬 Fil de vidéos</h1>
+        <p style="color: var(--text-muted);">Découvrez les vidéos publiées par les formateurs.</p>
+    </header>
+
+    {% for video in videos %}
+        <article class="feed-card">
+            <div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <a href="{% url 'videos:category_detail' video.category.pk %}" class="badge badge-published" style="text-decoration: none;">{{ video.category.name }}</a>
+                </div>
+                <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">
+                    <a href="{% url 'videos:video_detail' video.pk %}" style="color: var(--text-main); text-decoration: none;">{{ video.title }}</a>
+                </h2>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    👨‍🏫 {{ video.creator.username }} · ⏱️ {{ video.duration_seconds }} s · {{ video.published_at|date:"d M Y" }}
+                </p>
+                <p class="feed-description">{{ video.description }}</p>
+                <a href="{% url 'videos:video_detail' video.pk %}" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">Voir les détails</a>
+            </div>
+            <video class="feed-video" controls preload="metadata" playsinline aria-label="{{ video.title }}">
+                <source src="{{ video.video_file.url }}">
+                Votre navigateur ne prend pas en charge la lecture vidéo.
+            </video>
+        </article>
+    {% empty %}
+        <div style="text-align: center; background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 4rem 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎥</div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Aucune vidéo publiée pour le moment</h2>
+            <p style="color: var(--text-muted);">Les nouvelles vidéos apparaîtront ici dès leur publication.</p>
+        </div>
+    {% endfor %}
+
+    {% if is_paginated %}
+        <nav aria-label="Pagination du fil" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+            {% if page_obj.has_previous %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}">← Précédent</a>{% endif %}
+            <span style="align-self: center; color: var(--text-muted);">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}">Suivant →</a>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

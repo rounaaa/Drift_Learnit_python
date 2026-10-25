@@ -1,0 +1,28 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}{% if is_new %}Ajouter un synonyme{% else %}Modifier « {{ synonym.term }} »{% endif %}{% endblock %}
+
+{% block module_content %}
+{% include "personalization/manage/_nav.html" %}
+<header class="ps-pagehead">
+  <h1 class="ps-pagehead__title">{% if is_new %}Ajouter un synonyme{% else %}Modifier « {{ synonym.term }} »{% endif %}</h1>
+</header>
+
+<form method="post" class="ps-stack-form ps-stack-form--narrow" novalidate>
+  {% csrf_token %}
+  {% include "personalization/_field.html" with field=form.term %}
+  {% include "personalization/_field.html" with field=form.synonyms %}
+  <label class="ps-check ps-check--big">
+    {{ form.bidirectional }}
+    <span>Dans les deux sens <span class="ps-field__help">Chercher un synonyme trouve aussi les contenus du terme.</span></span>
+  </label>
+  <label class="ps-check ps-check--big">
+    {{ form.is_active }}
+    <span>Actif</span>
+  </label>
+  <div class="ps-prefs__actions">
+    <button type="submit" class="btn btn-primary">{% if is_new %}Ajouter le synonyme{% else %}Enregistrer les modifications{% endif %}</button>
+    <a class="ps-linkbtn" href="{% url 'personalization:synonym-list' %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

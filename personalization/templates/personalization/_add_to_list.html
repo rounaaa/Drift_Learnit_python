@@ -1,0 +1,38 @@
+{% load personalization_tags %}
+{# US37 — Menu « À regarder plus tard ». Variables : kind, obj, watchlists, saved_keys (contexte). #}
+{% if user.is_authenticated %}
+{% with key=obj|content_key:kind %}
+<details class="ps-addlist">
+  <summary class="ps-addlist__toggle {% if saved_keys|contains:key %}ps-is-saved{% endif %}">
+    {% if saved_keys|contains:key %}Dans vos listes{% else %}À regarder plus tard{% endif %}
+  </summary>
+  <div class="ps-addlist__menu">
+    {% if watchlists %}
+      <p class="ps-addlist__title">Ajouter à une liste</p>
+      {% for watchlist in watchlists %}
+        <form method="post" action="{% url 'personalization:watchlist-item-add' %}">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="{{ kind }}">
+          <input type="hidden" name="content_id" value="{{ obj.pk }}">
+          <input type="hidden" name="watchlist" value="{{ watchlist.pk }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="ps-addlist__item">{{ watchlist.name }}</button>
+        </form>
+      {% endfor %}
+    {% endif %}
+    <form method="post" action="{% url 'personalization:watchlist-item-add' %}" class="ps-addlist__new">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="{{ kind }}">
+      <input type="hidden" name="content_id" value="{{ obj.pk }}">
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label for="new-list-{{ kind }}-{{ obj.pk }}" class="ps-addlist__title">Nouvelle liste</label>
+      <div class="ps-addlist__newrow">
+        <input id="new-list-{{ kind }}-{{ obj.pk }}" type="text" name="new_list" maxlength="100"
+               placeholder="Ex. : Révisions examen" required>
+        <button type="submit" class="btn btn-primary btn-sm">Créer et ajouter</button>
+      </div>
+    </form>
+  </div>
+</details>
+{% endwith %}
+{% endif %}

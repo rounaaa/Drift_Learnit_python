@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div>
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% url 'course_detail' course.pk %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">&larr; Retour au cours « {{ course.title }} »</a>
+    </div>
+
+    <div class="form-card">
+        <div style="margin-bottom: 2rem;">
+            <span style="background: var(--primary-light); color: var(--primary); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.65rem; border-radius: 9999px; display: inline-block; margin-bottom: 0.6rem;">
+                Cours : {{ course.title }}
+            </span>
+            <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.4rem;">{{ title }}</h1>
+            <p style="color: var(--text-muted); font-size: 0.92rem;">Définissez le contenu pédagogique et l'ordre de cette leçon.</p>
+        </div>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span style="color: var(--danger); margin-left: 2px;">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <div class="form-error">⚠️ {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="alert-box alert-error" style="margin-bottom: 1rem;">⚠️ {{ error }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.75rem;">
+                    ✓ {{ action_text }}
+                </button>
+                <a href="{% url 'course_detail' course.pk %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

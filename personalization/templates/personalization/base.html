@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static personalization_tags %}
+{# Gabarit du module : garde l'en-tête, les messages et le pied de page de LearnIt (base.html de l'équipe) #}
+{# et ajoute le sous-menu du module. Les pages remplissent page_title, module_content et module_js. #}
+
+{% block title %}{% block page_title %}Recherche{% endblock %} — LearnIt{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'personalization/personalization.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ps">
+  {% search_nav as nav %}
+  {% with name=request.resolver_match.url_name|default:"" %}
+  <nav class="ps-mainnav" aria-label="Recherche et personnalisation">
+    <a href="{% url 'personalization:search' %}" {% if name == "search" %}aria-current="page"{% endif %}>🔍 Rechercher</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'personalization:recommendations' %}" {% if name == "recommendations" %}aria-current="page"{% endif %}>Pour vous</a>
+      <a href="{% url 'personalization:watchlist-list' %}" {% if name|slice:":9" == "watchlist" %}aria-current="page"{% endif %}>Mes listes</a>
+      <a href="{% url 'personalization:saved-list' %}" {% if name|slice:":5" == "saved" %}aria-current="page"{% endif %}>
+        Mes recherches{% if nav.new_results %} <span class="ps-badge" title="{{ nav.new_results }} nouveau{{ nav.new_results|pluralize:'x' }} contenu{{ nav.new_results|pluralize }}">{{ nav.new_results }}</span>{% endif %}
+      </a>
+      <a href="{% url 'personalization:preferences' %}" {% if name == "preferences" %}aria-current="page"{% endif %}>Centres d'intérêt</a>
+      {% if nav.is_admin %}
+        <a class="ps-mainnav__manage" href="{% url 'personalization:stats' %}" {% if name == "stats" or name|slice:":7" == "synonym" %}aria-current="page"{% endif %}>Gestion</a>
+      {% endif %}
+    {% else %}
+      <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Connectez-vous pour vos listes et recommandations</a>
+    {% endif %}
+  </nav>
+  {% endwith %}
+
+  {% block module_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}{% block module_js %}{% endblock %}{% endblock %}

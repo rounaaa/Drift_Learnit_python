@@ -1,0 +1,7 @@
+{# Un champ de formulaire avec libellé, aide et erreur. Variables : field, help (facultatif). #}
+<div class="ps-field {% if field.errors %}ps-field--error{% endif %}">
+  <label class="ps-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {% if help or field.help_text %}<p class="ps-field__help">{{ help|default:field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="ps-field-error">{{ field.errors.0 }}</p>{% endif %}
+</div>

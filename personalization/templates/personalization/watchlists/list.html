@@ -1,0 +1,56 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Mes listes{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Mes listes</h1>
+    <p class="ps-pagehead__lead">Rangez les vidéos et les cours à voir plus tard. Ajoutez-en depuis la recherche ou depuis « Pour vous » avec le bouton « À regarder plus tard ».</p>
+  </div>
+</header>
+
+<div class="ps-split">
+  <section>
+    {% if watchlists %}
+      <ul class="ps-cards">
+        {% for watchlist in watchlists %}
+          <li class="ps-listcard">
+            <a class="ps-listcard__link" href="{% url 'personalization:watchlist-detail' watchlist.pk %}">
+              <span class="ps-listcard__stack" aria-hidden="true">
+                {% for item in watchlist.items.all|slice:":3" %}
+                  <span class="ps-listcard__tile ps-listcard__tile--{{ item.content_type }}"></span>
+                {% empty %}
+                  <span class="ps-listcard__tile ps-listcard__tile--empty"></span>
+                {% endfor %}
+              </span>
+              <span class="ps-listcard__text">
+                <span class="ps-listcard__name">{{ watchlist.name }}</span>
+                <span class="ps-listcard__meta">{{ watchlist.item_count }} contenu{{ watchlist.item_count|pluralize }}, modifiée le {{ watchlist.updated_at|date:"j F Y" }}</span>
+                {% if watchlist.description %}<span class="ps-listcard__desc">{{ watchlist.description|truncatewords:18 }}</span>{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="ps-empty">
+        <p class="ps-empty__title">Vous n'avez pas encore de liste.</p>
+        <p>Créez-en une ici, ou directement depuis un résultat de recherche.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if watchlists|length < max %}
+    <aside class="ps-panel">
+      <h2 class="ps-panel__title">Nouvelle liste</h2>
+      <form method="post" action="{% url 'personalization:watchlist-create' %}" class="ps-stack-form" novalidate>
+        {% csrf_token %}
+        {% include "personalization/_field.html" with field=form.name %}
+        {% include "personalization/_field.html" with field=form.description %}
+        <button type="submit" class="btn btn-primary">Créer la liste</button>
+      </form>
+    </aside>
+  {% endif %}
+</div>
+{% endblock %}

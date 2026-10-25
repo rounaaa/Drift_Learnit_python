@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div>
+    <!-- BREADCRUMB & BACK -->
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% url 'course_catalog' %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">&larr; Retour au catalogue</a>
+    </div>
+
+    <!-- MAIN TWO-COLUMN LAYOUT -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+        
+        <!-- LEFT COLUMN: COURSE INFO & LESSONS -->
+        <div>
+            <!-- COURSE HEADER CARD -->
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1rem;">
+                    <span class="badge badge-{{ course.level|lower }}">{{ course.get_level_display }}</span>
+                    <span class="badge badge-{{ course.status|lower }}">{{ course.get_status_display }}</span>
+                    {% if user_enrollment %}
+                        <span class="badge badge-{{ user_enrollment.status|lower }}">Mon Inscription : {{ user_enrollment.get_status_display }}</span>
+                    {% endif %}
+                </div>
+
+                <h1 style="font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 1rem; color: var(--text-main);">
+                    {{ course.title }}
+                </h1>
+
+                <p style="font-size: 1.05rem; color: #334155; line-height: 1.7; white-space: pre-line; margin-bottom: 1.5rem;">
+                    {{ course.description }}
+                </p>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: 0.88rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                    <div>👤 Créé par : <strong>{{ course.creator.username }}</strong></div>
+                    <div>📅 Date : <strong>{{ course.created_at|date:"d M Y" }}</strong></div>
+                    {% if course.published_at %}
+                        <div>🚀 Publié le : <strong>{{ course.published_at|date:"d M Y" }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- LESSONS SECTION (US07 & US08) -->
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Programme des leçons</h2>
+                        <p style="font-size: 0.88rem; color: var(--text-muted);">{{ lessons.count }} leçon{{ lessons.count|pluralize }} dans ce parcours</p>
+                    </div>
+
+                    {% if is_creator %}
+                        <a href="{% url 'lesson_create' course.pk %}" class="btn btn-primary btn-sm">
+                            + Ajouter une leçon
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if lessons %}
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        {% for lesson in lessons %}
+                            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; background: #fafafa; transition: var(--transition);">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                        {{ lesson.order }}
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.2rem;">
+                                            {{ lesson.title }}
+                                        </h4>
+                                        <div style="display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-muted);">
+                                            {% if lesson.duration_seconds %}
+                                                <span>⏱️ {{ lesson.duration_seconds }}s</span>
+                                            {% endif %}
+                                            {% if lesson.video %}
+                                                <span>🎬 Vidéo liée</span>
+                                            {% endif %}
+                                            {% if lesson.description %}
+                                                <span style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ lesson.description }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if is_creator %}
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="{% url 'lesson_edit' course.pk lesson.pk %}" class="btn btn-secondary btn-sm" title="Modifier la leçon">✏️</a>
+                                        <a href="{% url 'lesson_delete' course.pk lesson.pk %}" class="btn btn-secondary btn-sm" style="color: var(--danger);" title="Supprimer la leçon">🗑️</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 2.5rem 1rem; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
+                        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.95rem;">Ce cours n'a pas encore de leçons.</p>
+                        {% if is_creator %}
+                            <a href="{% url 'lesson_create' course.pk %}" class="btn btn-primary btn-sm">+ Ajouter la première leçon</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: ENROLLMENT & ACTIONS CARD (US09) -->
+        <div style="position: sticky; top: 5rem;">
+            <!-- ACTION CARD -->
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-md); margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem;">Commencer la formation</h3>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; font-size: 0.92rem; color: var(--text-main);">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-muted);">Total leçons :</span>
+                        <strong>{{ lessons.count }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-muted);">Durée totale :</span>
+                        <strong>{{ course.total_duration|default:"0" }} secondes</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-muted);">Apprenants :</span>
+                        <strong>{{ course.total_students }} inscrit{{ course.total_students|pluralize }}</strong>
+                    </div>
+                </div>
+
+                <!-- ENROLL BUTTON / STATUS (US09) -->
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+                        🔐 Se connecter pour s'inscrire
+                    </a>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 0.6rem;">
+                        Connectez-vous avec un compte Apprenant pour suivre ce cours
+                    </p>
+                {% elif user.role == "LEARNER" %}
+                    {% if user_enrollment and user_enrollment.status == "ACTIVE" %}
+                        <div style="background: var(--success-light); border: 1px solid #a7f3d0; border-radius: var(--radius-md); padding: 1rem; text-align: center; margin-bottom: 1rem;">
+                            <span style="color: #065f46; font-weight: 700; display: block; margin-bottom: 0.25rem;">✓ Vous êtes inscrit</span>
+                            <span style="font-size: 0.82rem; color: #047857;">Inscrit depuis le {{ user_enrollment.enrolled_at|date:"d M Y" }}</span>
+                        </div>
+                        <a href="{% url 'my_enrollments' %}" class="btn btn-secondary" style="width: 100%;">Accéder à mes inscriptions</a>
+                    {% elif user_enrollment and user_enrollment.status == "COMPLETED" %}
+                        <div style="background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: var(--radius-md); padding: 1rem; text-align: center; margin-bottom: 1rem;">
+                            <span style="color: #3730a3; font-weight: 700; display: block;">🏆 Cours terminé !</span>
+                            <span style="font-size: 0.82rem; color: #4338ca;">Complété le {{ user_enrollment.completed_at|date:"d M Y" }}</span>
+                        </div>
+                        <a href="{% url 'my_enrollments' %}" class="btn btn-secondary" style="width: 100%;">Voir dans mes cours</a>
+                    {% else %}
+                        <form method="POST" action="{% url 'course_enroll' course.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+                                🚀 S'inscrire à ce cours
+                            </button>
+                        </form>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 0.6rem;">
+                            Accès immédiat et gratuit à toutes les leçons
+                        </p>
+                    {% endif %}
+                {% elif is_creator %}
+                    <div style="background: #f1f5f9; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; text-align: center; margin-bottom: 1rem;">
+                        <span style="color: var(--primary); font-weight: 700; display: block;">👨‍🏫 Vous êtes le formateur</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Gérez vos leçons et le contenu pédagogique</span>
+                    </div>
+                    <a href="{% url 'lesson_create' course.pk %}" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">+ Ajouter une leçon</a>
+                    <a href="{% url 'my_courses' %}" class="btn btn-secondary" style="width: 100%;">Mes formations</a>
+                {% else %}
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
+                        <span style="font-size: 0.88rem; color: var(--text-muted);">Vous êtes connecté en tant que <strong>{{ user.get_role_display }}</strong>. Seuls les apprenants peuvent s'inscrire.</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if is_creator %}
+                <!-- CREATOR MANAGEMENT SHORTCUTS (US06) -->
+                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">Gestion du cours</span>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <a href="{% url 'course_edit' course.pk %}" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start;">
+                            ✏️ Modifier les infos du cours
+                        </a>
+                        <a href="{% url 'course_delete' course.pk %}" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; color: var(--danger);">
+                            🗑️ Supprimer ce cours
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

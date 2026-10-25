@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LearnIt — Plateforme d'apprentissage moderne{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --secondary: #0ea5e9;
+            --accent: #8b5cf6;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER & NAVBAR */
+        .navbar-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem 1.5rem;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--text-main);
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+        }
+
+        .nav-links {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.6rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .btn-create-course {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white !important;
+            padding: 0.5rem 1rem !important;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-create-course:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+        }
+
+        /* MAIN CONTAINER */
+        .main-container {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* TOAST MESSAGES */
+        .messages-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-box {
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .alert-success { background: var(--success-light); color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .alert-warning { background: var(--warning-light); color: #92400e; border: 1px solid #fde68a; }
+        .alert-error { background: var(--danger-light); color: #991b1b; border: 1px solid #fecaca; }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-main);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-beginner { background: #dcfce7; color: #15803d; }
+        .badge-intermediate { background: #fef3c7; color: #b45309; }
+        .badge-advanced { background: #fae8ff; color: #86198f; }
+
+        .badge-published { background: #e0e7ff; color: #4338ca; }
+        .badge-draft { background: #f1f5f9; color: #475569; }
+        .badge-archived { background: #fee2e2; color: #991b1b; }
+
+        .badge-active { background: #dcfce7; color: #15803d; }
+        .badge-completed { background: #e0e7ff; color: #4338ca; }
+        .badge-cancelled { background: #fee2e2; color: #991b1b; }
+
+        /* FORM STYLES */
+        .form-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+            color: var(--text-main);
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 0.82rem;
+            margin-top: 0.35rem;
+            font-weight: 500;
+        }
+
+        /* FOOTER */
+        .footer {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .nav-links { flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="navbar-wrapper">
+        <nav class="navbar">
+            <a href="{% if user.is_authenticated and user.role == 'LEARNER' %}{% url 'videos:learner_feed' %}{% else %}{% url 'course_catalog' %}{% endif %}" class="brand-logo">
+                <div class="brand-badge">⚡</div>
+                <span>Learn<span style="color: var(--primary);">It</span></span>
+            </a>
+            <ul class="nav-links">
+                                <li><a href="{% url 'personalization:search' %}" class="nav-link {% if request.resolver_match.namespace == 'personalization' %}active{% endif %}">🔍 Rechercher</a></li>
+                {% if user.is_authenticated %}
+                    {% if user.role == "LEARNER" %}
+                        <!-- PAGES DE L'APPRENANT -->
+                        <li><a href="{% url 'videos:learner_feed' %}" class="nav-link">🎬 Fil de vidéos</a></li>
+                        <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
+                        <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
+                    {% elif user.role == "CREATOR" %}
+                        <!-- PAGES DU FORMATEUR -->
+                        <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes cours</a></li>
+                        <li><a href="{% url 'videos:my_videos' %}" class="nav-link">🎬 Mes vidéos</a></li>
+                        <li><a href="{% url 'videos:video_create' %}" class="nav-link btn-create-course">+ Vidéo</a></li>
+                        <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
+                    {% else %}
+                        <!-- PAGES DE L'ADMINISTRATEUR -->
+                        <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
+                        <li><a href="{% url 'videos:category_list' %}" class="nav-link">🎬 Catégories vidéo</a></li>
+                        <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
+                        <li><a href="/admin/" class="nav-link" style="color: #6366f1; font-weight: 700;">🛡️ Admin Django</a></li>
+                    {% endif %}
+                    <!-- USER BADGE -->
+                    <li>
+                        <span style="background: #f1f5f9; border: 1px solid var(--border-color); padding: 0.4rem 0.8rem; border-radius: 9999px; font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
+                            {% if user.role == "LEARNER" %}🎓{% elif user.role == "CREATOR" %}👨‍🏫{% else %}🛡️{% endif %}
+                            {{ user.username }} · {{ user.get_role_display }}
+                        </span>
+                    </li>
+                    <li>
+                        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'login' %}" class="nav-link">Connexion</a></li>
+                    <li><a href="{% url 'register' %}" class="nav-link btn-create-course">✨ S'inscrire</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-box alert-{{ message.tags }}">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 LearnIt — Module 2 : Gestion des cours et inscriptions</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
