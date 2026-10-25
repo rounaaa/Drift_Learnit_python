@@ -14,4 +14,9 @@ urlpatterns = [
 
     # AJAX : envoi de message
     path("agent/session/<int:session_id>/send/", views.send_message_view, name="agent_send_message"),
+
+    # Quiz IA interactif selon le niveau
+    path("quiz/", views.quiz_page_view, name="agent_quiz"),
+    path("quiz/generate/", views.generate_quiz_api, name="agent_quiz_generate"),
 ]
+

@@ -104,3 +104,113 @@ def send_message_view(request, session_id):
         "session_title": session.title,
         "message_id": agent_msg.pk,
     })
+
+
+# ──────────────────────────────────────────────────────────
+# Quiz IA selon le niveau
+# ──────────────────────────────────────────────────────────
+
+@login_required
+def quiz_page_view(request):
+    """
+    Page interactive de génération et passage de Quiz IA selon le niveau.
+    Permet à l'apprenant de choisir un cours ou un sujet libre,
+    de sélectionner son niveau (Débutant, Intermédiaire, Avancé)
+    et de lancer la génération du quiz.
+    """
+    from courses.models import Course, Enrollment
+
+    selected_course_id = request.GET.get("course_id")
+    selected_level = request.GET.get("level", "BEGINNER")
+
+    # Récupérer les cours disponibles
+    courses = Course.objects.filter(status=Course.Status.PUBLISHED).order_by("title")
+    
+    # Récupérer les cours suivis par l'apprenant
+    enrolled_courses = Course.objects.filter(
+        enrollments__user=request.user,
+        enrollments__status=Enrollment.Status.ACTIVE
+    ).distinct()
+
+    # Si un course_id est passé, pré-sélectionner son niveau si non spécifié
+    selected_course = None
+    if selected_course_id:
+        try:
+            selected_course = courses.filter(pk=selected_course_id).first()
+            if selected_course and "level" not in request.GET:
+                selected_level = selected_course.level
+        except (ValueError, TypeError):
+            pass
+
+    context = {
+        "courses": courses,
+        "enrolled_courses": enrolled_courses,
+        "selected_course": selected_course,
+        "selected_course_id": int(selected_course_id) if selected_course_id and str(selected_course_id).isdigit() else None,
+        "selected_level": selected_level,
+        "levels": [
+            ("BEGINNER", "🟢 Débutant", "Notions de base, définitions et concepts fondamentaux"),
+            ("INTERMEDIATE", "🟡 Intermédiaire", "Mise en pratique, syntaxe et résolution de cas concrets"),
+            ("ADVANCED", "🔴 Avancé", "Architecture, pièges subtils, performance et optimisation"),
+        ],
+    }
+    return render(request, "agent/quiz.html", context)
+
+
+@login_required
+@require_POST
+def generate_quiz_api(request):
+    """
+    API AJAX pour générer un quiz via Gemini selon le niveau et sujet choisi.
+    Reçoit un JSON : { topic, level, num_questions, course_id }
+    Retourne le Quiz structuré en JSON.
+    """
+    from .quiz_service import generate_quiz_with_gemini
+    from courses.models import Course
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Requête invalide (JSON attendu)."}, status=400)
+
+    topic = data.get("topic", "").strip()
+    level = data.get("level", "BEGINNER").upper()
+    course_id = data.get("course_id")
+    num_questions = int(data.get("num_questions", 5))
+
+    # Limiter le nombre de questions entre 3 et 10
+    num_questions = max(3, min(10, num_questions))
+
+    if level not in ["BEGINNER", "INTERMEDIATE", "ADVANCED"]:
+        level = "BEGINNER"
+
+    course_context = ""
+    if course_id:
+        try:
+            course = Course.objects.prefetch_related("lessons").filter(pk=course_id).first()
+            if course:
+                if not topic:
+                    topic = course.title
+                lesson_titles = [f"#{l.order} {l.title}" for l in course.lessons.all()]
+                course_context = (
+                    f"Titre du cours: {course.title}. "
+                    f"Description: {course.description}. "
+                    f"Programme des leçons: {', '.join(lesson_titles) if lesson_titles else 'Non spécifié'}."
+                )
+        except Exception as e:
+            pass
+
+    if not topic:
+        topic = "Culture générale du développement informatique"
+
+    try:
+        quiz_data = generate_quiz_with_gemini(
+            topic=topic,
+            level=level,
+            num_questions=num_questions,
+            course_context=course_context,
+        )
+        return JsonResponse({"success": True, "quiz": quiz_data})
+    except Exception as exc:
+        return JsonResponse({"error": f"Erreur lors de la génération : {str(exc)}"}, status=500)
+

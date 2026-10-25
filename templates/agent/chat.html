@@ -617,6 +617,9 @@
         <p>Je suis <strong>ALEX</strong>, votre conseiller pédagogique IA. Je peux consulter le catalogue
         des cours, analyser vos inscriptions et vous proposer un parcours personnalisé.</p>
         <div class="quick-questions">
+          <a href="{% url 'agent_quiz' %}" class="quick-q-btn" style="background: #eef2ff; border-color: var(--primary); color: var(--primary); font-weight: 700; text-decoration: none;">
+            🎯 Créer un Quiz IA selon mon niveau
+          </a>
           <button class="quick-q-btn" onclick="sendQuickQuestion('Je débute en programmation, par où commencer ?')">
             🚀 Je débute en programmation
           </button>

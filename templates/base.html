@@ -309,16 +309,19 @@
                         <!-- PAGES DE L'APPRENANT -->
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
                         <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                         <li><a href="{% url 'agent_chat' %}" class="nav-link" style="color: #8b5cf6; font-weight: 700;">🤖 Conseiller IA</a></li>
                     {% elif user.role == "CREATOR" %}
                         <!-- PAGES DU FORMATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes formations</a></li>
                         <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                     {% else %}
                         <!-- PAGES DE L'ADMINISTRATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
                         <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                         <li><a href="/admin/" class="nav-link" style="color: #6366f1; font-weight: 700;">🛡️ Admin Django</a></li>
                     {% endif %}

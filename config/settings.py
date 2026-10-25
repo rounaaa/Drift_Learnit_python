@@ -159,5 +159,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_HTTPONLY = True
 
 # ─── Agent conseiller pédagogique (Gemini API) ────────────────
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '[GCP_API_KEY]')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '[ENCRYPTION_KEY]')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+
