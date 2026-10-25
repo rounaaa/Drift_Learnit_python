@@ -1,0 +1,124 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Statistiques des recherches{% endblock %}
+
+{% block module_content %}
+{% include "personalization/manage/_nav.html" %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Statistiques des recherches</h1>
+    <p class="ps-pagehead__lead">Ce que cherchent les apprenants connectés, et ce qu'ils ne trouvent pas.</p>
+  </div>
+  <div class="ps-pagehead__actions">
+    <form method="get" class="ps-period">
+      <label for="periode" class="ps-visually-hidden">Période</label>
+      <select id="periode" name="periode" onchange="this.form.submit()">
+        {% for value, label in periods.items %}
+          <option value="{{ value }}" {% if value == days %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-secondary btn-sm">Afficher</button></noscript>
+    </form>
+    <a class="btn btn-secondary" href="{% url 'personalization:stats-export' %}?periode={{ days }}">Exporter en CSV</a>
+  </div>
+</header>
+
+<dl class="ps-kpis">
+  <div class="ps-kpi">
+    <dt>Recherches</dt>
+    <dd>{{ overview.total }}</dd>
+    <p class="ps-kpi__note">par {{ overview.users }} apprenant{{ overview.users|pluralize }}</p>
+  </div>
+  <div class="ps-kpi {% if overview.zero_rate >= 20 %}ps-kpi--alert{% endif %}">
+    <dt>Sans résultat</dt>
+    <dd>{{ overview.zero_rate }} %</dd>
+    <p class="ps-kpi__note">{{ overview.zero }} recherche{{ overview.zero|pluralize }}</p>
+  </div>
+  <div class="ps-kpi">
+    <dt>Résultats en moyenne</dt>
+    <dd>{{ overview.avg_results }}</dd>
+    <p class="ps-kpi__note">par recherche</p>
+  </div>
+  <div class="ps-kpi">
+    <dt>Recommandations masquées</dt>
+    <dd>{{ overview.reco_dismiss_rate }} %</dd>
+    <p class="ps-kpi__note">sur {{ overview.reco_total }} proposées</p>
+  </div>
+</dl>
+
+<section class="ps-block">
+  <h2 class="ps-block__title">Recherches par jour</h2>
+  {% if peak %}
+    <div class="ps-bars" role="img" aria-label="Nombre de recherches par jour sur les {{ days }} derniers jours, maximum {{ peak }} par jour">
+      {% for d in series %}
+        <div class="ps-bars__col" title="{{ d.day|date:'j F' }} : {{ d.count }} recherche{{ d.count|pluralize }}">
+          <span class="ps-bars__bar" style="height: {{ d.percent }}%"></span>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="ps-bars__axis">
+      <span>{{ series.0.day|date:"j F" }}</span>
+      <span>Maximum : {{ peak }} par jour</span>
+      {% with last=series|last %}<span>{{ last.day|date:"j F" }}</span>{% endwith %}
+    </div>
+  {% else %}
+    <p class="ps-empty__title">Aucune recherche sur cette période.</p>
+  {% endif %}
+</section>
+
+<div class="ps-split ps-split--even">
+  <section class="ps-block">
+    <h2 class="ps-block__title">Recherches les plus fréquentes</h2>
+    {% if top %}
+      <table class="ps-table">
+        <thead><tr><th scope="col">Recherche</th><th scope="col" class="ps-num">Fois</th><th scope="col" class="ps-num">Résultats moyens</th></tr></thead>
+        <tbody>
+          {% for row in top %}
+            <tr>
+              <td><a href="{% url 'personalization:search' %}?q={{ row.query|urlencode }}">{{ row.query }}</a></td>
+              <td class="ps-num">{{ row.count }}</td>
+              <td class="ps-num">{{ row.avg_results }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="ps-footnote">Rien à afficher pour cette période.</p>
+    {% endif %}
+  </section>
+
+  <section class="ps-block ps-block--alert">
+    <h2 class="ps-block__title">Recherches sans résultat</h2>
+    <p class="ps-block__lead">Des contenus manquent, ou les apprenants utilisent d'autres mots. Ajoutez un synonyme pour les relier à des contenus existants.</p>
+    {% if zero %}
+      <table class="ps-table">
+        <thead><tr><th scope="col">Recherche</th><th scope="col" class="ps-num">Fois</th><th scope="col"><span class="ps-visually-hidden">Action</span></th></tr></thead>
+        <tbody>
+          {% for row in zero %}
+            <tr>
+              <td>{{ row.query }}</td>
+              <td class="ps-num">{{ row.count }}</td>
+              <td class="ps-action">
+                {% if row.has_synonym %}
+                  <span class="ps-footnote">Synonyme existant</span>
+                {% else %}
+                  <a href="{% url 'personalization:synonym-create' %}?term={{ row.query|urlencode }}">Ajouter un synonyme</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="ps-footnote">Toutes les recherches ont trouvé au moins un contenu.</p>
+    {% endif %}
+  </section>
+</div>
+
+<p class="ps-footnote">
+  Sur toute la plateforme : {{ overview.saved_searches }} recherche{{ overview.saved_searches|pluralize }} sauvegardée{{ overview.saved_searches|pluralize }},
+  {{ overview.watchlists }} liste{{ overview.watchlists|pluralize }} ({{ overview.watchlist_items }} contenu{{ overview.watchlist_items|pluralize }} enregistré{{ overview.watchlist_items|pluralize }}),
+  {{ overview.synonyms }} synonyme{{ overview.synonyms|pluralize }} actif{{ overview.synonyms|pluralize }}.
+  Les recherches des visiteurs non connectés ne sont pas enregistrées.
+</p>
+{% endblock %}

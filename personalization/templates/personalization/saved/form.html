@@ -1,0 +1,53 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}{% if is_new %}Sauvegarder une recherche{% else %}Modifier « {{ saved.name }} »{% endif %}{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">{% if is_new %}Sauvegarder une recherche{% else %}Modifier la recherche{% endif %}</h1>
+    {% if not is_new %}<p class="ps-pagehead__lead">{{ saved.describe }}</p>{% endif %}
+  </div>
+</header>
+
+<form method="post" class="ps-stack-form" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="ps-notice ps-notice--error">{{ form.non_field_errors.0 }}</p>{% endif %}
+
+  {% include "personalization/_field.html" with field=form.name %}
+  {% include "personalization/_field.html" with field=form.query help="Laissez vide pour suivre tous les contenus d'une catégorie." %}
+
+  <fieldset class="ps-prefs__group ps-prefs__group--compact">
+    <legend class="ps-field__label">Type de contenu</legend>
+    <div class="ps-segmented ps-segmented--inline">
+      {% for radio in form.content_type %}
+        <label class="ps-segmented__opt">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset class="ps-prefs__group ps-prefs__group--compact">
+    <legend class="ps-field__label">Catégories</legend>
+    <div class="ps-chips">
+      {% for checkbox in form.categories %}
+        <label class="ps-chip">{{ checkbox.tag }}<span>{{ checkbox.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="ps-field-row">
+    {% include "personalization/_field.html" with field=form.level %}
+    {% include "personalization/_field.html" with field=form.ordering %}
+  </div>
+
+  <label class="ps-check ps-check--big">
+    {{ form.notify }}
+    <span>Me signaler les nouveaux contenus correspondant à cette recherche</span>
+  </label>
+
+  <div class="ps-prefs__actions">
+    <button type="submit" class="btn btn-primary">{% if is_new %}Sauvegarder la recherche{% else %}Enregistrer les modifications{% endif %}</button>
+    <a class="ps-linkbtn" href="{% url 'personalization:saved-list' %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

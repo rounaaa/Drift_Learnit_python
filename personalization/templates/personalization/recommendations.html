@@ -1,0 +1,62 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Pour vous{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Pour vous</h1>
+    <p class="ps-pagehead__lead">
+      {% if has_interests %}
+        Sélection basée sur vos centres d'intérêt
+        ({% for label in interests %}{{ label }}{% if not forloop.last %}, {% endif %}{% endfor %})
+        et sur les vidéos que vous avez regardées.
+        <a href="{% url 'personalization:preferences' %}">Modifier</a>
+      {% else %}
+        Sélection basée sur les vidéos que vous avez regardées et sur les contenus populaires.
+      {% endif %}
+    </p>
+  </div>
+  <form method="post" action="{% url 'personalization:refresh-recommendations' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary">Actualiser</button>
+  </form>
+</header>
+
+{% if not has_interests %}
+  <aside class="ps-callout">
+    <p class="ps-callout__title">Des recommandations plus justes en 30 secondes</p>
+    <p>Indiquez les sujets qui vous intéressent et votre niveau.</p>
+    <a class="btn btn-primary" href="{% url 'personalization:preferences' %}">Choisir mes centres d'intérêt</a>
+  </aside>
+{% endif %}
+
+{% if recommendations %}
+  <ol class="ps-ranked">
+    {% for reco in recommendations %}
+      <li class="ps-ranked__item">
+        <span class="ps-ranked__num" aria-hidden="true">{{ forloop.counter }}</span>
+        <div class="ps-ranked__content">
+          {% if reco.video_id %}
+            {% include "personalization/_content_row.html" with kind="video" obj=reco.video q="" show_list_menu=True %}
+          {% else %}
+            {% include "personalization/_content_row.html" with kind="course" obj=reco.course q="" show_list_menu=True %}
+          {% endif %}
+          <div class="ps-ranked__foot">
+            <p class="ps-reason ps-reason--{{ reco.reason|lower }}">{{ reco.get_reason_display }}</p>
+            <form method="post" action="{% url 'personalization:dismiss-recommendation' reco.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="ps-linkbtn ps-linkbtn--muted">Ne plus proposer</button>
+            </form>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <div class="ps-empty">
+    <p class="ps-empty__title">Vous avez fait le tour de nos contenus.</p>
+    <p>Revenez quand de nouvelles vidéos et de nouveaux cours seront publiés, ou <a href="{% url 'personalization:search' %}">parcourez le catalogue</a>.</p>
+  </div>
+{% endif %}
+{% endblock %}

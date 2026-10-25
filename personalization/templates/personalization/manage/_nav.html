@@ -1,0 +1,6 @@
+{% with name=request.resolver_match.url_name %}
+<nav class="ps-subnav" aria-label="Gestion">
+  <a href="{% url 'personalization:stats' %}" {% if name == "stats" %}aria-current="page"{% endif %}>Statistiques</a>
+  <a href="{% url 'personalization:synonym-list' %}" {% if name|slice:":7" == "synonym" %}aria-current="page"{% endif %}>Synonymes</a>
+</nav>
+{% endwith %}

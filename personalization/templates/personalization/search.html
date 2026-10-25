@@ -1,0 +1,214 @@
+{% extends "personalization/base.html" %}
+{% load personalization_tags %}
+
+{% block page_title %}{% if q %}{{ q }} : recherche{% else %}Rechercher{% endif %}{% endblock %}
+
+{% block module_content %}
+<form method="get" action="{% url 'personalization:search' %}" class="ps-search" id="search-form" role="search"></form>
+
+<section class="ps-hero">
+    <label class="ps-hero__label" for="q">Que voulez-vous apprendre ?</label>
+    <div class="ps-hero__field">
+      <input type="search" id="q" name="q" form="search-form" value="{{ q }}" maxlength="255"
+             placeholder="Django, réseaux, machine learning…" autocomplete="off" {% if not q %}autofocus{% endif %}>
+      <button type="submit" form="search-form" class="btn btn-primary">Rechercher</button>
+    </div>
+
+    {% if recent_searches %}
+      <div class="ps-recent">
+        <span class="ps-recent__label">Recherches récentes</span>
+        <ul class="ps-recent__list">
+          {% for item in recent_searches %}
+            <li><a href="?q={{ item.query|urlencode }}">{{ item.query }}</a></li>
+          {% endfor %}
+        </ul>
+        <button type="submit" form="clear-history" class="ps-linkbtn ps-linkbtn--muted">Effacer l'historique</button>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if errors %}
+    <p class="ps-notice ps-notice--error">Certains filtres n'étaient pas valides et ont été ignorés.</p>
+  {% endif %}
+
+  <div class="ps-layout">
+    <aside class="ps-filters" aria-label="Filtres">
+      <details class="ps-filters__panel" open data-active="{{ active_filters|yesno:'1,0' }}">
+        <summary class="ps-filters__toggle">Filtres{% if active_filters %} (actifs){% endif %}</summary>
+
+        <fieldset class="ps-filter">
+          <legend>Type de contenu</legend>
+          <div class="ps-segmented">
+            {% for value, label in content_types %}
+              <label class="ps-segmented__opt">
+                <input form="search-form" type="radio" name="type" value="{{ value }}" {% if params.content_type == value %}checked{% endif %} data-autosubmit>
+                <span>{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        {% if user.is_authenticated %}
+          <fieldset class="ps-filter">
+            <legend class="ps-visually-hidden">Personnalisation</legend>
+            <label class="ps-switch">
+              <input form="search-form" type="checkbox" name="interests" value="true" {% if interests %}checked{% endif %}
+                     {% if not has_preferences %}disabled{% endif %} data-autosubmit>
+              <span class="ps-switch__track" aria-hidden="true"></span>
+              <span>Seulement mes centres d'intérêt</span>
+            </label>
+            {% if not has_preferences %}
+              <p class="ps-filter__hint"><a href="{% url 'personalization:preferences' %}">Choisissez vos centres d'intérêt</a> pour activer ce filtre.</p>
+            {% endif %}
+          </fieldset>
+        {% endif %}
+
+        <fieldset class="ps-filter">
+          <legend>Catégorie</legend>
+          {% for code, label in categories %}
+            <label class="ps-check">
+              <input form="search-form" type="checkbox" name="category" value="{{ code }}"
+                     {% if code in params.category_codes %}checked{% endif %} data-autosubmit>
+              <span>{{ label }}</span>
+            </label>
+          {% empty %}
+            <p class="ps-filter__hint">Aucune catégorie pour le moment.</p>
+          {% endfor %}
+        </fieldset>
+
+        <fieldset class="ps-filter">
+          <legend>Niveau</legend>
+          <label class="ps-check">
+            <input form="search-form" type="radio" name="level" value="" {% if not params.level %}checked{% endif %} data-autosubmit>
+            <span>Tous les niveaux</span>
+          </label>
+          {% for value, label in levels %}
+            <label class="ps-check">
+              <input form="search-form" type="radio" name="level" value="{{ value }}" {% if params.level == value %}checked{% endif %} data-autosubmit>
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+          <p class="ps-filter__hint">Le niveau s'applique aux cours. Les vidéos sont masquées quand un niveau est choisi.</p>
+        </fieldset>
+
+        <div class="ps-filters__actions">
+          <button type="submit" form="search-form" class="btn btn-secondary ps-js-hide">Appliquer les filtres</button>
+          {% if active_filters %}
+            <a class="ps-linkbtn" href="?{% if q %}q={{ q|urlencode }}{% endif %}">Retirer les filtres</a>
+          {% endif %}
+        </div>
+      </details>
+    </aside>
+
+    <section class="ps-results" aria-live="polite">
+      <header class="ps-results__head">
+        <h2 class="ps-results__count">
+          {% if q %}
+            {{ count }} résultat{{ count|pluralize }} pour « {{ q }} »
+          {% else %}
+            {{ count }} contenu{{ count|pluralize }} disponible{{ count|pluralize }}
+          {% endif %}
+        </h2>
+        {% if synonyms_used %}
+          <p class="ps-results__synonyms">Inclut aussi : {% for term in synonyms_used %}<mark>{{ term }}</mark>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+        <label class="ps-sort">
+          <span>Trier par</span>
+          <select name="ordering" form="search-form" data-autosubmit>
+            {% for value, label in orderings %}
+              <option value="{{ value }}" {% if params.ordering == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </header>
+
+      {% if user.is_authenticated and can_save %}
+        {% if matching_saved %}
+          <p class="ps-savebar ps-savebar--done">
+            Recherche sauvegardée sous « {{ matching_saved.name }} ».
+            <a href="{% url 'personalization:saved-list' %}">Gérer mes recherches</a>
+          </p>
+        {% else %}
+          <details class="ps-savebar">
+            <summary class="ps-savebar__toggle">Sauvegarder cette recherche</summary>
+            <form method="post" action="{% url 'personalization:saved-create' %}" class="ps-savebar__form">
+              {% csrf_token %}
+              <input type="hidden" name="query" value="{{ q }}">
+              <input type="hidden" name="content_type" value="{{ params.content_type }}">
+              {% for code in params.category_codes %}<input type="hidden" name="categories" value="{{ code }}">{% endfor %}
+              <input type="hidden" name="level" value="{{ params.level }}">
+              <input type="hidden" name="ordering" value="{{ params.ordering }}">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <label class="ps-field ps-field--inline">
+                <span>Nom</span>
+                <input type="text" name="name" value="{{ q|default:'Ma recherche' }}" maxlength="100" required>
+              </label>
+              <label class="ps-check">
+                <input type="checkbox" name="notify" value="on" checked>
+                <span>Me signaler les nouveaux contenus</span>
+              </label>
+              <button type="submit" class="btn btn-primary btn-sm">Sauvegarder</button>
+            </form>
+          </details>
+        {% endif %}
+      {% endif %}
+
+      {% if items %}
+        <ol class="ps-rows">
+          {% for item in items %}
+            <li>{% include "personalization/_content_row.html" with kind=item.type obj=item.obj q=highlight_terms show_list_menu=True %}</li>
+          {% endfor %}
+        </ol>
+
+        {% if total_pages > 1 %}
+          <nav class="ps-pager" aria-label="Pages de résultats">
+            {% if page > 1 %}
+              <a class="btn btn-secondary" href="{% querystring page=page|add:'-1' %}" rel="prev">Page précédente</a>
+            {% else %}<span></span>{% endif %}
+            <span class="ps-pager__status">Page {{ page }} sur {{ total_pages }}</span>
+            {% if page < total_pages %}
+              <a class="btn btn-secondary" href="{% querystring page=page|add:'1' %}" rel="next">Page suivante</a>
+            {% else %}<span></span>{% endif %}
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="ps-empty">
+          {% if q %}
+            <p class="ps-empty__title">Aucun contenu ne correspond à « {{ q }} ».</p>
+            <p>Vérifiez l'orthographe, essayez un mot plus court{% if active_filters %} ou <a href="?q={{ q|urlencode }}">retirez les filtres</a>{% endif %}.</p>
+          {% else %}
+            <p class="ps-empty__title">Aucun contenu publié ne correspond à ces filtres.</p>
+            <p><a href="{% url 'personalization:search' %}">Voir tous les contenus</a></p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+{% if user.is_authenticated %}
+  <form id="clear-history" method="post" action="{% url 'personalization:clear-history' %}" hidden>{% csrf_token %}</form>
+{% endif %}
+{% endblock %}
+
+{% block module_js %}
+<script>
+  // Les filtres s'appliquent dès qu'on les change (sans JavaScript, le bouton « Appliquer » reste visible).
+  (function () {
+    var form = document.getElementById("search-form");
+    if (!form) return;
+    document.documentElement.classList.add("ps-js");
+    // Sur mobile, les filtres sont repliés tant qu'aucun n'est actif.
+    var panel = document.querySelector(".ps-filters__panel");
+    if (panel && panel.dataset.active === "0" && window.matchMedia("(max-width: 860px)").matches) {
+      panel.removeAttribute("open");
+    }
+    document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+      el.addEventListener("change", function () {
+        var page = form.querySelector("input[name=page]");
+        if (page) page.remove();
+        form.requestSubmit ? form.requestSubmit() : form.submit();
+      });
+    });
+  })();
+</script>
+{% endblock %}

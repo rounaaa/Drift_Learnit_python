@@ -1,0 +1,31 @@
+{% load personalization_tags %}
+{# Une vidéo ou un cours. Variables : kind ("video" / "course"), obj, q (facultatif), #}
+{# show_list_menu (facultatif) : affiche le menu « À regarder plus tard ». #}
+{% with url=obj|detail_url category=obj|category_label published=obj|content_date %}
+<article class="ps-row ps-row--{{ kind }}">
+  <div class="ps-row__visual" aria-hidden="true">
+    {% if kind == "video" and obj.thumbnail_url %}
+      <img src="{{ obj.thumbnail_url }}" alt="" loading="lazy">
+    {% elif kind == "video" %}
+      <svg viewBox="0 0 24 24" class="ps-row__glyph"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+    {% else %}
+      <svg viewBox="0 0 24 24" class="ps-row__glyph"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+    {% endif %}
+    {% if kind == "video" and obj.duration_seconds %}<span class="ps-row__duration">{{ obj.duration_seconds|duration }}</span>{% endif %}
+  </div>
+
+  <div class="ps-row__body">
+    <p class="ps-row__kind">{% if kind == "video" %}Vidéo{% else %}Cours{% endif %}{% if category %} en {{ category|highlight:q }}{% endif %}</p>
+    <h3 class="ps-row__title">
+      {% if url %}<a href="{{ url }}">{{ obj.title|highlight:q }}</a>{% else %}{{ obj.title|highlight:q }}{% endif %}
+    </h3>
+    {% if obj.description %}<p class="ps-row__desc">{{ obj.description|truncatewords:28|highlight:q }}</p>{% endif %}
+    <p class="ps-row__meta">
+      {% if kind == "course" and obj.level %}<span class="badge badge-{{ obj.level|lower }}">{{ obj.get_level_display }}</span>{% endif %}
+      {% if kind == "video" and obj.duration_seconds %}<span class="ps-row__meta-duration">{{ obj.duration_seconds|duration }}</span>{% endif %}
+      {% if published %}<span>Publié{% if kind == "video" %}e{% endif %} le {{ published|date:"j F Y" }}</span>{% endif %}
+    </p>
+    {% if show_list_menu %}{% include "personalization/_add_to_list.html" %}{% endif %}
+  </div>
+</article>
+{% endwith %}
