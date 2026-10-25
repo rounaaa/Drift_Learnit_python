@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Ma progression — LearnIt{% endblock %}
+{% block extra_css %}{% include "progress/_styles.html" %}{% endblock %}
+
+{% block content %}
+<section class="progress-header">
+    <h1>Ma progression</h1>
+    <p class="progress-muted">Retrouvez vos cours en cours, terminés et votre activité récente.</p>
+</section>
+
+<div class="progress-grid">
+    <div class="progress-card">
+        <p class="progress-muted">Cours en cours</p>
+        <h2>{{ in_progress_count }}</h2>
+    </div>
+    <div class="progress-card">
+        <p class="progress-muted">Cours terminés</p>
+        <h2>{{ completed_count }}</h2>
+    </div>
+    <div class="progress-card">
+        <a href="{% url 'progress:course_list' %}" class="btn btn-secondary">Tous mes cours suivis</a>
+        <a href="{% url 'progress:history' %}" class="btn btn-secondary">Historique complet</a>
+    </div>
+</div>
+
+<section class="progress-card" style="margin-bottom: 1.5rem;">
+    <h2>Activité récente</h2>
+    {% if recent_progress %}
+        <div class="progress-list">
+            {% for item in recent_progress %}
+                <div>
+                    <div class="progress-row">
+                        <a href="{% url 'progress:detail' item.pk %}"><strong>{{ item.course.title }}</strong></a>
+                        <span class="badge {% if item.status == 'COMPLETED' %}badge-completed{% elif item.status == 'IN_PROGRESS' %}badge-active{% else %}badge-draft{% endif %}">{{ item.get_status_display }}</span>
+                    </div>
+                    <div class="progress-meter"><span style="width: {{ item.progress_percentage }}%;"></span></div>
+                    <small class="progress-muted">{{ item.progress_percentage }} % · Dernier accès : {{ item.last_accessed_at|date:"d/m/Y H:i" }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-muted">Vous n'avez pas encore commencé de cours.</p>
+    {% endif %}
+</section>
+
+<section class="progress-card">
+    <h2>Mes inscriptions actives</h2>
+    {% if active_enrollments %}
+        <div class="progress-list">
+            {% for enrollment in active_enrollments %}
+                <div class="progress-row">
+                    <div>
+                        <strong>{{ enrollment.course.title }}</strong><br>
+                        <small class="progress-muted">Inscrit le {{ enrollment.enrolled_at|date:"d/m/Y" }}</small>
+                    </div>
+                    <form method="post" action="{% url 'progress:start_course' enrollment.course_id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">Démarrer / reprendre</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-muted">Aucune inscription active. Parcourez le <a href="{% url 'course_catalog' %}">catalogue</a> pour choisir un cours.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Historique d'apprentissage — LearnIt{% endblock %}
+{% block extra_css %}{% include "progress/_styles.html" %}{% endblock %}
+
+{% block content %}
+<section class="progress-header">
+    <h1>Historique d'apprentissage</h1>
+    <p class="progress-muted">Vos cours récemment consultés et terminés.</p>
+</section>
+
+<form method="get" class="progress-filter">
+    <div class="form-group">
+        {{ filter_form.status.label_tag }}
+        {{ filter_form.status }}
+        {% for error in filter_form.status.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+    </div>
+    <button class="btn btn-primary" type="submit">Filtrer</button>
+    <a class="btn btn-secondary" href="{% url 'progress:history' %}">Effacer</a>
+</form>
+
+{% if history %}
+    <div class="progress-list">
+        {% for item in history %}
+            <article class="progress-card">
+                <div class="progress-row">
+                    <h2><a href="{% url 'progress:detail' item.pk %}">{{ item.course.title }}</a></h2>
+                    <span class="badge {% if item.status == 'COMPLETED' %}badge-completed{% elif item.status == 'IN_PROGRESS' %}badge-active{% else %}badge-draft{% endif %}">{{ item.get_status_display }}</span>
+                </div>
+                <div class="progress-meter"><span style="width: {{ item.progress_percentage }}%;"></span></div>
+                <p class="progress-muted">
+                    {{ item.progress_percentage }} % · Dernier accès : {{ item.last_accessed_at|date:"d/m/Y H:i" }}
+                    {% if item.completed_at %} · Terminé le {{ item.completed_at|date:"d/m/Y" }}{% endif %}
+                </p>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="progress-card"><p class="progress-muted">Votre historique est vide pour ce filtre.</p></div>
+{% endif %}
+
+{% if is_paginated %}
+    <nav class="progress-row" aria-label="Pagination" style="margin-top: 1.25rem;">
+        {% if page_obj.has_previous %}<a class="btn btn-secondary" href="?{% if request.GET.status %}status={{ request.GET.status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Précédent</a>{% endif %}
+        <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a class="btn btn-secondary" href="?{% if request.GET.status %}status={{ request.GET.status }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Suivant</a>{% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

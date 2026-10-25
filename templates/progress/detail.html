@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Progression — {{ course_progress.course.title }}{% endblock %}
+{% block extra_css %}{% include "progress/_styles.html" %}{% endblock %}
+
+{% block content %}
+<section class="progress-header">
+    <p><a href="{% url 'progress:course_list' %}">← Mes cours suivis</a></p>
+    <h1>{{ course_progress.course.title }}</h1>
+    <p class="progress-muted">Formateur : {{ course_progress.course.creator.username }}</p>
+</section>
+
+<section class="progress-card" style="margin-bottom: 1.5rem;">
+    <div class="progress-row">
+        <h2>Progression : {{ course_progress.progress_percentage }} %</h2>
+        <span class="badge {% if course_progress.status == 'COMPLETED' %}badge-completed{% elif course_progress.status == 'IN_PROGRESS' %}badge-active{% else %}badge-draft{% endif %}">{{ course_progress.get_status_display }}</span>
+    </div>
+    <div class="progress-meter"><span style="width: {{ course_progress.progress_percentage }}%;"></span></div>
+    <p class="progress-muted">Dernier accès : {{ course_progress.last_accessed_at|date:"d/m/Y H:i" }}</p>
+    {% if course_progress.completed_at %}<p class="progress-muted">Terminé le {{ course_progress.completed_at|date:"d/m/Y H:i" }}</p>{% endif %}
+</section>
+
+<section class="progress-card">
+    <h2>Leçons</h2>
+    {% for lesson in lessons %}
+        <div class="lesson-row progress-row">
+            <div>
+                <strong>{{ lesson.order }}. {{ lesson.title }}</strong>
+                {% if lesson.description %}<p class="progress-muted">{{ lesson.description }}</p>{% endif %}
+            </div>
+            <div class="progress-row">
+                {% if lesson.video_id and lesson.video.status == "PUBLISHED" %}
+                    <a class="btn btn-secondary" href="{% url 'videos:video_detail' lesson.video_id %}">Regarder la vidéo</a>
+                {% endif %}
+                {% if lesson.pk in completed_lesson_ids %}
+                    <span class="badge badge-completed">Terminée</span>
+                {% else %}
+                    <form method="post" action="{% url 'progress:complete_lesson' lesson.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">Marquer comme terminée</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="progress-muted">Ce cours ne contient pas encore de leçon.</p>
+    {% endfor %}
+</section>
+{% endblock %}

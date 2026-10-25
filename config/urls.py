@@ -14,6 +14,7 @@ urlpatterns = [
     path('', include('courses.urls')),
     path('', include('users.urls')),
     path('videos/', include('videos.urls')),
+    path('progression/', include('progress.urls')),
     path('', include('django.contrib.auth.urls')),
     path('recherche/', include('personalization.urls')),
 ]

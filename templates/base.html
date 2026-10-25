@@ -316,6 +316,8 @@
                         <li><a href="{% url 'videos:learner_feed' %}" class="nav-link">🎬 Fil de vidéos</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
                         <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
+                        <li><a href="{% url 'progress:dashboard' %}" class="nav-link">📊 Ma progression</a></li>
+                        <li><a href="{% url 'progress:history' %}" class="nav-link">🕘 Historique</a></li>
                     {% elif user.role == "CREATOR" %}
                         <!-- PAGES DU FORMATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes cours</a></li>
@@ -367,6 +369,73 @@
     <footer class="footer">
         <p>&copy; 2026 LearnIt — Module 2 : Gestion des cours et inscriptions</p>
     </footer>
+
+    {% if user.is_authenticated and user.role == "LEARNER" %}
+        <script>
+            (() => {
+                const activityUrl = "{% url 'progress:video_activity' 0 %}";
+                const getVideoId = (video) => {
+                    const links = video.closest("article")?.querySelectorAll("a[href]") || [];
+                    for (const link of links) {
+                        const match = new URL(link.href, window.location.origin).pathname.match(/\/videos\/(\d+)\/?$/);
+                        if (match) return match[1];
+                    }
+                    const pageMatch = window.location.pathname.match(/\/videos\/(\d+)\/?$/);
+                    return pageMatch ? pageMatch[1] : null;
+                };
+                const csrfToken = () => {
+                    const cookie = document.cookie.split("; ").find((item) => item.startsWith("csrftoken="));
+                    return cookie ? decodeURIComponent(cookie.split("=")[1]) : "";
+                };
+                const notify = (message, success) => {
+                    let container = document.querySelector(".messages-container");
+                    if (!container) {
+                        container = document.createElement("div");
+                        container.className = "messages-container";
+                        document.querySelector(".main-container").prepend(container);
+                    }
+                    const alert = document.createElement("div");
+                    alert.className = `alert-box alert-${success ? "success" : "error"}`;
+                    alert.setAttribute("role", "status");
+                    alert.textContent = message;
+                    container.append(alert);
+                };
+                const sendActivity = async (videoId, action) => {
+                    const url = activityUrl.replace("/0/", `/${videoId}/`);
+                    const response = await fetch(url, {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-CSRFToken": csrfToken(),
+                        },
+                        body: new URLSearchParams({ action }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || "La progression n'a pas pu être enregistrée.");
+                    }
+                    if (!data.tracked) return;
+                    notify(data.message, true);
+                };
+                document.querySelectorAll("video").forEach((video) => {
+                    const videoId = getVideoId(video);
+                    if (!videoId) return;
+                    video.addEventListener("play", () => {
+                        if (video.dataset.progressStarted) return;
+                        video.dataset.progressStarted = "true";
+                        sendActivity(videoId, "started").catch((error) => {
+                            delete video.dataset.progressStarted;
+                            notify(error.message, false);
+                        });
+                    });
+                    video.addEventListener("ended", () => {
+                        sendActivity(videoId, "completed").catch((error) => notify(error.message, false));
+                    });
+                });
+            })();
+        </script>
+    {% endif %}
 
     {% block extra_js %}{% endblock %}
 </body>
