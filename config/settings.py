@@ -169,5 +169,4 @@ SESSION_COOKIE_HTTPONLY = True
 
 # ─── Agent conseiller pédagogique (Gemini API) ────────────────
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '[ENCRYPTION_KEY]')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
-
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-flash-latest')

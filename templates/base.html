@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -93,16 +94,11 @@
         }
 
         .brand-badge {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+            display: block;
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
 
         .nav-links {
@@ -375,7 +371,7 @@
         <nav class="navbar">
             <div class="navbar-left">
                 <a href="{% url 'course_catalog' %}" class="brand-logo">
-                    <div class="brand-badge">⚡</div>
+                    <img class="brand-badge" src="{% static 'images/learnit-logo.png' %}" alt="">
                     <span>Learn<span style="color: var(--primary);">It</span></span>
                 </a>
                 <ul class="nav-links">

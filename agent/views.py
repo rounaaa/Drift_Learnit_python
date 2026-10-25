@@ -1,4 +1,5 @@
 import json
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -7,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import ChatSession, ChatMessage
 from .agent_service import get_agent_response
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -90,7 +93,14 @@ def send_message_view(request, session_id):
         session.save(update_fields=["title"])
 
     # 3. Obtenir la réponse de l'agent IA
-    agent_text = get_agent_response(request.user, session)
+    try:
+        agent_text = get_agent_response(request.user, session)
+    except Exception:
+        logger.exception("Échec de génération de la réponse du conseiller IA.")
+        return JsonResponse(
+            {"error": "Le conseiller IA est momentanément indisponible. Réessayez dans quelques instants."},
+            status=503,
+        )
 
     # 4. Sauvegarder la réponse de l'agent
     agent_msg = ChatMessage.objects.create(
@@ -173,10 +183,22 @@ def generate_quiz_api(request):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "Requête invalide (JSON attendu)."}, status=400)
 
-    topic = data.get("topic", "").strip()
-    level = data.get("level", "BEGINNER").upper()
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Requête invalide."}, status=400)
+
+    topic = data.get("topic", "")
+    if not isinstance(topic, str):
+        return JsonResponse({"error": "Le sujet doit être un texte."}, status=400)
+    topic = topic.strip()
+    level = data.get("level", "BEGINNER")
+    if not isinstance(level, str):
+        return JsonResponse({"error": "Le niveau est invalide."}, status=400)
+    level = level.upper()
     course_id = data.get("course_id")
-    num_questions = int(data.get("num_questions", 5))
+    try:
+        num_questions = int(data.get("num_questions", 5))
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Le nombre de questions est invalide."}, status=400)
 
     # Limiter le nombre de questions entre 3 et 10
     num_questions = max(3, min(10, num_questions))
@@ -187,18 +209,20 @@ def generate_quiz_api(request):
     course_context = ""
     if course_id:
         try:
-            course = Course.objects.prefetch_related("lessons").filter(pk=course_id).first()
-            if course:
-                if not topic:
-                    topic = course.title
-                lesson_titles = [f"#{l.order} {l.title}" for l in course.lessons.all()]
-                course_context = (
-                    f"Titre du cours: {course.title}. "
-                    f"Description: {course.description}. "
-                    f"Programme des leçons: {', '.join(lesson_titles) if lesson_titles else 'Non spécifié'}."
-                )
-        except Exception as e:
-            pass
+            course = Course.objects.prefetch_related("lessons").get(
+                pk=course_id,
+                status=Course.Status.PUBLISHED,
+            )
+        except (Course.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({"error": "Le cours sélectionné est introuvable."}, status=400)
+        if not topic:
+            topic = course.title
+        lesson_titles = [f"#{lesson.order} {lesson.title}" for lesson in course.lessons.all()]
+        course_context = (
+            f"Titre du cours: {course.title}. "
+            f"Description: {course.description}. "
+            f"Programme des leçons: {', '.join(lesson_titles) if lesson_titles else 'Non spécifié'}."
+        )
 
     if not topic:
         topic = "Culture générale du développement informatique"
@@ -213,4 +237,3 @@ def generate_quiz_api(request):
         return JsonResponse({"success": True, "quiz": quiz_data})
     except Exception as exc:
         return JsonResponse({"error": f"Erreur lors de la génération : {str(exc)}"}, status=500)
-

@@ -113,7 +113,10 @@ def course_create_view(request):
             messages.success(request, f"✅ Cours « {course.title} » créé avec succès !")
             return redirect("course_detail", pk=course.pk)
     else:
-        form = CourseForm()
+        initial = {}
+        if request.user.is_superuser or getattr(request.user, "role", None) == "ADMIN":
+            initial["status"] = Course.Status.PUBLISHED
+        form = CourseForm(initial=initial)
 
     return render(request, "courses/course_form.html", {
         "form": form,

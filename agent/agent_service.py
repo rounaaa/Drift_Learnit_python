@@ -11,13 +11,14 @@ Ce module orchestre :
 import os
 import json
 import logging
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = getattr(settings, "GEMINI_MODEL", "") or os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = getattr(settings, "GEMINI_MODEL", "") or os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 
 
 # ──────────────────────────────────────────────────────────
@@ -193,7 +194,7 @@ def autonomous_advisor_response(user, last_user_message: str) -> str:
         if published_courses:
             lines.append(f"Actuellement, **{len(published_courses)} formation(s)** sont disponibles sur la plateforme. N'hésitez pas à vous inscrire pour démarrer !")
 
-    lines.append("\n---\n*💡 Note : Mode IA actif. Pour brancher directement le modèle en ligne Google Gemini, configurez votre clé `GEMINI_API_KEY` dans le fichier `.env`.*")
+    lines.append("\n---\n*💡 Le conseiller utilise actuellement son mode de secours local.*")
     return "\n".join(lines)
 
 
@@ -221,9 +222,6 @@ def call_gemini(system_prompt: str, conversation_history: list[dict], user=None)
     # Modèles candidats
     candidate_models = [
         GEMINI_MODEL,
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-        "gemini-3.5-flash",
         "gemini-flash-latest",
         "gemini-flash-lite-latest",
     ]
@@ -237,12 +235,24 @@ def call_gemini(system_prompt: str, conversation_history: list[dict], user=None)
 
     for model_name in models_to_try:
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(
-                model_name=model_name,
-                system_instruction=system_prompt,
+            client = genai.Client(api_key=api_key)
+            contents = [
+                types.Content(
+                    role=message["role"],
+                    parts=[
+                        types.Part.from_text(text=part)
+                        for part in message.get("parts", [])
+                    ],
+                )
+                for message in conversation_history
+            ]
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                ),
             )
-            response = model.generate_content(conversation_history)
             if response and response.text:
                 return response.text.strip()
         except Exception as exc:

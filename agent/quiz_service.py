@@ -12,16 +12,14 @@ import re
 import logging
 import random
 from django.conf import settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
 # Modèles Gemini disponibles ordonnés par priorité
 DEFAULT_MODELS = [
-    getattr(settings, "GEMINI_MODEL", "") or os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.5-flash",
+    getattr(settings, "GEMINI_MODEL", "") or os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
     "gemini-flash-latest",
     "gemini-flash-lite-latest",
 ]
@@ -133,6 +131,36 @@ def _generate_autonomous_quiz(topic: str, level: str, num_questions: int, course
             "exp": "Des contrats d'interfaces nets et documentés sont la clé de voûte de systèmes évolutifs."
         },
         {
+            "q": f"Pourquoi faut-il documenter les décisions importantes liées à {topic} ?",
+            "correct": "Pour faciliter la maintenance et aider l'équipe à comprendre le contexte des choix.",
+            "distractors": [
+                "Pour remplacer les tests et rendre le code inutile.",
+                "Pour empêcher toute évolution future du projet.",
+                "Pour garantir que personne d'autre ne puisse lire le projet."
+            ],
+            "exp": "Une documentation concise conserve le contexte utile et facilite les évolutions."
+        },
+        {
+            "q": f"Comment vérifier qu'une solution liée à {topic} répond au besoin ?",
+            "correct": "La confronter aux exigences avec des tests et des cas d'utilisation représentatifs.",
+            "distractors": [
+                "Se fier uniquement à son apparence sans vérifier son comportement.",
+                "Tester un seul cas favorable et ignorer les autres entrées.",
+                "Éviter les retours des utilisateurs concernés."
+            ],
+            "exp": "Des tests représentatifs permettent de vérifier le comportement attendu et les cas limites."
+        },
+        {
+            "q": f"Quelle est une bonne pratique pour faire évoluer un projet utilisant {topic} ?",
+            "correct": "Procéder par changements ciblés, vérifiables et compatibles avec les usages existants.",
+            "distractors": [
+                "Modifier plusieurs comportements sans les tester.",
+                "Ignorer les dépendances et les contrats déjà utilisés.",
+                "Supprimer les contrôles pour accélérer chaque livraison."
+            ],
+            "exp": "Des évolutions progressives et testées réduisent les régressions et simplifient la maintenance."
+        },
+        {
             "q": f"Quelle stratégie de sécurité doit être mise en œuvre lors de l'application de {topic} ?",
             "correct": "Le principe du moindre privilège et la validation rigoureuse de toutes les entrées utilisateurs.",
             "distractors": [
@@ -240,12 +268,15 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans aucune phrase d'introduction
 
     for model_name in models_to_try:
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(
-                model_name=model_name,
-                generation_config={"temperature": 0.4, "top_p": 0.95}
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.4,
+                    top_p=0.95,
+                ),
             )
-            response = model.generate_content(prompt)
 
             if response and response.text:
                 cleaned_text = _clean_json_output(response.text)

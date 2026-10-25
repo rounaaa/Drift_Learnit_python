@@ -1092,7 +1092,6 @@
     // Afficher la première question
     renderQuestion(currentQuestionIndex);
     window.scrollTo({ top: 100, behavior: "smooth" });
-    submitGamificationResults(userScore, total);
   }
 
   function updateScoreBadge() {
@@ -1295,17 +1294,23 @@
         // Afficher les détails du calcul d'XP
         const breakdownCont = document.getElementById("xp-breakdown-container");
         breakdownCont.innerHTML = "";
+        const appendXpPill = (text, bonus = false) => {
+          const pill = document.createElement("span");
+          pill.className = bonus ? "xp-pill bonus" : "xp-pill";
+          pill.textContent = text;
+          breakdownCont.appendChild(pill);
+        };
         if (data.breakdown) {
-          breakdownCont.innerHTML += <span class="xp-pill">Participation: + + data.breakdown.base +  XP</span>;
-          breakdownCont.innerHTML += <span class="xp-pill">Bonnes rép.: + + data.breakdown.correct_answers +  XP</span>;
+          appendXpPill(`Participation : +${data.breakdown.base} XP`);
+          appendXpPill(`Bonnes réponses : +${data.breakdown.correct_answers} XP`);
           if (data.breakdown.multiplier > 1.0) {
-            breakdownCont.innerHTML += <span class="xp-pill bonus">Niveau x + data.breakdown.multiplier + </span>;
+            appendXpPill(`Multiplicateur de niveau ×${data.breakdown.multiplier}`, true);
           }
           if (data.breakdown.perfect_bonus > 0) {
-            breakdownCont.innerHTML += <span class="xp-pill bonus">🏆 100% Sans-faute : + + data.breakdown.perfect_bonus +  XP</span>;
+            appendXpPill(`🏆 Sans-faute : +${data.breakdown.perfect_bonus} XP`, true);
           }
           if (data.breakdown.high_score_bonus > 0) {
-            breakdownCont.innerHTML += <span class="xp-pill bonus">⭐ Bon score : + + data.breakdown.high_score_bonus +  XP</span>;
+            appendXpPill(`⭐ Bon score : +${data.breakdown.high_score_bonus} XP`, true);
           }
         }
 
@@ -1332,13 +1337,18 @@
           data.unlocked_badges.forEach(b => {
             const item = document.createElement("div");
             item.className = "new-badge-item";
-            item.innerHTML = 
-              <span style="font-size: 1.6rem;"> + b.icon + </span>
-              <div>
-                <strong style="color: #065f46; font-size: 0.9rem;"> + escapeHtml(b.name) + </strong>
-                <div style="font-size: 0.78rem; color: #047857;"> + escapeHtml(b.description) +  (+ + b.xp_bonus +  XP)</div>
-              </div>
-            ;
+            const icon = document.createElement("span");
+            icon.style.fontSize = "1.6rem";
+            icon.textContent = b.icon;
+            const details = document.createElement("div");
+            const name = document.createElement("strong");
+            name.style.cssText = "color: #065f46; font-size: 0.9rem;";
+            name.textContent = b.name;
+            const description = document.createElement("div");
+            description.style.cssText = "font-size: 0.78rem; color: #047857;";
+            description.textContent = `${b.description} (+${b.xp_bonus} XP)`;
+            details.append(name, description);
+            item.append(icon, details);
             badgesList.appendChild(item);
           });
           badgesCont.style.display = "block";
@@ -1378,7 +1388,6 @@
     document.getElementById("quiz-results-container").style.display = "none";
     document.getElementById("quiz-setup-card").style.display = "block";
     window.scrollTo({ top: 100, behavior: "smooth" });
-    submitGamificationResults(userScore, total);
   }
 
   function escapeHtml(text) {
