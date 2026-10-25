@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue des cours — LearnIt{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+    <!-- HERO HEADER -->
+    <div style="background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%); border-radius: var(--radius-lg); padding: 2.5rem 2rem; color: white; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+        <span style="background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: 0.75rem;">US08 — Catalogue d'apprentissage</span>
+        <h1 style="font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem;">Explorez nos cours &amp; formations</h1>
+        <p style="color: #e0e7ff; font-size: 1.05rem; max-width: 650px;">Développez vos compétences à votre rythme grâce aux modules interactifs préparés par des formateurs passionnés.</p>
+    </div>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
+        <form method="GET" action="{% url 'course_catalog' %}" style="display: flex; flex: 1; gap: 0.75rem; flex-wrap: wrap; min-width: 280px;">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Rechercher par titre ou mot-clé..." class="form-control" style="flex: 1; min-width: 180px;">
+
+            <!-- Filtre catégorie -->
+            <select name="category" class="form-select" style="max-width: 200px;">
+                <option value="">Toutes les catégories</option>
+                {% for code, label in categories %}
+                    <option value="{{ code }}" {% if selected_category == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Filtre niveau -->
+            <select name="level" class="form-select" style="max-width: 180px;">
+                <option value="">Tous les niveaux</option>
+                {% for code, label in levels %}
+                    <option value="{{ code }}" {% if selected_level == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if search_query or selected_level or selected_category %}
+                <a href="{% url 'course_catalog' %}" class="btn btn-secondary">Réinitialiser</a>
+            {% endif %}
+        </form>
+
+        {% if not user.is_authenticated or user.role != "LEARNER" %}
+        <div>
+            <a href="{% url 'course_create' %}" class="btn btn-primary">+ Nouveau cours</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Résumé des filtres actifs -->
+    {% if search_query or selected_level or selected_category %}
+    <div style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.9rem;">Filtres actifs :</span>
+        {% if search_query %}
+            <span style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.7rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;">🔍 "{{ search_query }}"</span>
+        {% endif %}
+        {% if selected_category %}
+            <span style="background: #d1fae5; color: #065f46; padding: 0.2rem 0.7rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;">🗂️ {{ selected_category }}</span>
+        {% endif %}
+        {% if selected_level %}
+            <span style="background: #fef3c7; color: #92400e; padding: 0.2rem 0.7rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;">📊 {{ selected_level }}</span>
+        {% endif %}
+        <span style="color: var(--text-muted); font-size: 0.85rem;">— {{ courses|length }} résultat{{ courses|length|pluralize }}</span>
+    </div>
+    {% endif %}
+
+    <!-- COURSES GRID -->
+    {% if courses %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;">
+            {% for course in courses %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: var(--transition);" onmouseover="this.style.boxShadow='var(--shadow-md)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'; this.style.transform='none'">
+                    <div>
+                        <!-- Header badges -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.4rem;">
+                            <span class="badge badge-{{ course.level|lower }}">{{ course.get_level_display }}</span>
+                            <span class="badge badge-{{ course.status|lower }}">{{ course.get_status_display }}</span>
+                        </div>
+
+                        <!-- Catégorie badge -->
+                        {% if course.category %}
+                        <div style="margin-bottom: 0.75rem;">
+                            <span style="background: #ede9fe; color: #5b21b6; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em;">
+                                🗂️ {{ course.get_category_display }}
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Title & Description -->
+                        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main); line-height: 1.35;">
+                            <a href="{% url 'course_detail' course.pk %}" style="text-decoration: none; color: inherit;">{{ course.title }}</a>
+                        </h2>
+                        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.25rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ course.description }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <!-- Stats pill row -->
+                        <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+                            <span>📖 <strong>{{ course.total_lessons|default:"0" }}</strong> leçon{{ course.total_lessons|pluralize }}</span>
+                            <span>⏱️ <strong>{{ course.total_duration|default:"0" }}s</strong></span>
+                            <span>👥 <strong>{{ course.total_students|default:"0" }}</strong> inscrit{{ course.total_students|pluralize }}</span>
+                        </div>
+
+                        <!-- Footer author and action -->
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 0.82rem; color: var(--text-muted);">
+                                Par <strong>{{ course.creator.username }}</strong>
+                            </div>
+                            <div>
+                                {% if course.pk in enrolled_course_ids %}
+                                    <span class="badge badge-active" style="margin-right: 0.5rem;">✓ Déjà inscrit</span>
+                                {% endif %}
+                                <a href="{% url 'course_detail' course.pk %}" class="btn btn-secondary btn-sm">Voir détails &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 4rem 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Aucun cours trouvé</h3>
+            <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto 1.5rem;">Aucune formation ne correspond à vos critères. Essayez de modifier vos filtres ou créez le premier cours !</p>
+            {% if user.role != "LEARNER" %}
+            <a href="{% url 'course_create' %}" class="btn btn-primary">+ Créer un cours maintenant</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

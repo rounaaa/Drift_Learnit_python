@@ -1,0 +1,23 @@
+[project]
+name = "learnit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Admin", email = "admin@example.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.1",
+    "google-generativeai>=0.8.6",
+    "pillow>=13.0.0",
+    "psycopg2-binary>=2.9.13",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+learnit = "learnit:main"
+
+[build-system]
+requires = ["uv_build>=0.12.12,<0.13.0"]
+build-backend = "uv_build"

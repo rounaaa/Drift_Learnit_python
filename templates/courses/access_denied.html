@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé — LearnIt{% endblock %}
+{% block content %}
+<div style="max-width: 540px; margin: 4rem auto; text-align: center;">
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 2rem; box-shadow: var(--shadow-md);">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
+        <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--danger);">Accès refusé</h1>
+        <p style="color: var(--text-muted); margin-bottom: 0.5rem;">
+            Votre rôle actuel <strong>{{ request.user.get_role_display }}</strong> ne vous permet pas d'accéder à cette page.
+        </p>
+        <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.9rem;">
+            Rôle requis :
+            {% for role in required_roles %}
+                <strong>{{ role }}</strong>{% if not forloop.last %} ou {% endif %}
+            {% endfor %}
+        </p>
+        <a href="{% url 'course_catalog' %}" class="btn btn-primary">&larr; Retour au catalogue</a>
+    </div>
+</div>
+{% endblock %}
