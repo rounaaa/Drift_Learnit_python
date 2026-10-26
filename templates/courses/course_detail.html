@@ -39,6 +39,16 @@
                         <div>🚀 Publié le : <strong>{{ course.published_at|date:"d M Y" }}</strong></div>
                     {% endif %}
                 </div>
+
+                {% if course.course_file %}
+                    <div style="margin-top: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #f8fafc; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2rem;">Document</div>
+                            <strong>{{ course.course_file.name|cut:'courses/pdfs/' }}</strong>
+                        </div>
+                        <a href="{{ course.course_file.url }}" target="_blank" class="btn btn-primary btn-sm">Télécharger le PDF</a>
+                    </div>
+                {% endif %}
             </div>
 
             <!-- LESSONS SECTION (US07 & US08) -->

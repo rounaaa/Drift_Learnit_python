@@ -14,7 +14,7 @@
             <p style="color: var(--text-muted); font-size: 0.92rem;">Remplissez les informations du cours. Les champs marqués sont obligatoires.</p>
         </div>
 
-        <form method="POST" novalidate>
+        <form method="POST" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
             {% for field in form %}
@@ -52,6 +52,43 @@
                 {% endif %}
             </div>
         </form>
+
+        {% if course and course.creator == user or user.is_superuser or user.role == 'ADMIN' %}
+            {% if course.pk %}
+                <hr style="margin: 2rem 0; border: 1px solid var(--border-color);">
+                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
+                    <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem;">Proposer un plan</h2>
+                    <form method="post" action="{% url 'course_outline_generate' course.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">✦ Proposer un plan</button>
+                    </form>
+
+                    {% if outline_preview %}
+                        <form method="post" action="{% url 'course_outline_save' course.pk %}" style="margin-top: 1.5rem;">
+                            {% csrf_token %}
+                            <div style="display: grid; gap: 1rem;">
+                                {% for lesson in outline_preview %}
+                                    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                            <input type="checkbox" name="lesson_{{ forloop.counter0 }}_selected" checked>
+                                            <label style="font-weight: 700; margin: 0;">Leçon {{ forloop.counter }}</label>
+                                        </div>
+                                        <div style="display: grid; gap: 0.75rem;">
+                                            <input type="text" name="lesson_{{ forloop.counter0 }}_title" value="{{ lesson.title }}" class="form-control" required>
+                                            <textarea name="lesson_{{ forloop.counter0 }}_description" class="form-control" rows="3">{{ lesson.description }}</textarea>
+                                            <input type="number" name="lesson_{{ forloop.counter0 }}_duration" value="{{ lesson.duration_seconds }}" class="form-control" min="1" required>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <button type="submit" class="btn btn-primary">Valider le plan</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}

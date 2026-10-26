@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Connexion — LearnIt{% endblock %}
 
 {% block content %}
@@ -6,7 +7,7 @@
     <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2.5rem 2rem; box-shadow: var(--shadow-md);">
 
         <div style="text-align: center; margin-bottom: 2rem;">
-            <div style="background: linear-gradient(135deg, var(--primary), var(--accent)); width: 52px; height: 52px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.6rem; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">⚡</div>
+            <img src="{% static 'images/learnit-logo.png' %}" alt="Logo LearnIt" style="width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto 1rem;">
             <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem;">Connexion à LearnIt</h1>
             <p style="color: var(--text-muted); font-size: 0.9rem;">Entrez vos identifiants pour accéder à la plateforme</p>
         </div>
@@ -47,14 +48,7 @@
             </a>
         </div>
 
-        <!-- ACCOUNTS INFO (test helper) -->
-        <div style="margin-top: 2rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; font-size: 0.83rem; color: var(--text-muted);">
-            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-main);">👥 Comptes de test disponibles :</strong>
-            <div>🎓 <strong>learner_user</strong> — Rôle : Apprenant</div>
-            <div>👨‍🏫 <strong>creator_user</strong> — Rôle : Formateur</div>
-            <div>🛡️ <strong>admin_user</strong> — Rôle : Administrateur</div>
-            <div style="margin-top: 0.4rem; font-style: italic;">Mot de passe commun : <strong>LearnIt2026!</strong></div>
-        </div>
+        
     </div>
 </div>
 {% endblock %}

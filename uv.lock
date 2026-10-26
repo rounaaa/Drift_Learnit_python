@@ -1354,6 +1354,7 @@ dependencies = [
     { name = "python-bidi" },
     { name = "python-dotenv" },
     { name = "reportlab" },
+    { name = "requests" },
     { name = "scikit-learn" },
 ]
 
@@ -1376,6 +1377,7 @@ requires-dist = [
     { name = "python-bidi", specifier = ">=0.6" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "reportlab", specifier = ">=4.2" },
+    { name = "requests", specifier = ">=2.34.2" },
     { name = "scikit-learn", specifier = ">=1.5" },
 ]
 

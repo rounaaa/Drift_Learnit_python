@@ -1,9 +1,13 @@
+import json
+
 from django.contrib import messages
-from django.db.models import Count, Sum, Q
+from django.db import transaction
+from django.db.models import Count, Max, Sum, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
+from .ai import generate_course_outline
 from .forms import CourseForm, LessonForm
 from .models import Course, Lesson, Enrollment
 
@@ -103,7 +107,7 @@ def course_create_view(request):
         return denied
 
     if request.method == "POST":
-        form = CourseForm(request.POST)
+        form = CourseForm(request.POST, request.FILES)
         if form.is_valid():
             course = form.save(commit=False)
             course.creator = request.user
@@ -137,7 +141,7 @@ def course_update_view(request, pk):
         return redirect("course_detail", pk=pk)
 
     if request.method == "POST":
-        form = CourseForm(request.POST, instance=course)
+        form = CourseForm(request.POST, request.FILES, instance=course)
         if form.is_valid():
             updated = form.save(commit=False)
             if updated.status == Course.Status.PUBLISHED and not updated.published_at:
@@ -197,6 +201,75 @@ def my_courses_view(request):
         "creator": request.user,
         "is_admin": getattr(request.user, "role", None) == "ADMIN" or request.user.is_superuser,
     })
+
+
+@login_required
+def course_outline_generate_view(request, pk):
+    """Génère un aperçu de leçons pour un cours existant."""
+    denied = _require_role(request, "CREATOR", "ADMIN")
+    if denied:
+        return denied
+    course = get_object_or_404(Course, pk=pk)
+    if course.creator != request.user and not request.user.is_superuser and getattr(request.user, "role", None) != "ADMIN":
+        messages.error(request, "Vous ne pouvez modifier que vos propres cours.")
+        return redirect("course_detail", pk=pk)
+    if request.method != "POST":
+        return redirect("course_edit", pk=pk)
+
+    outline = generate_course_outline(
+        course.title,
+        course.description,
+        course.level,
+        pdf_path=course.course_file.path if course.course_file else None,
+    )
+    form = CourseForm(instance=course)
+    return render(request, "courses/course_form.html", {
+        "form": form,
+        "course": course,
+        "title": f"Modifier : {course.title}",
+        "action_text": "Mettre à jour",
+        "outline_preview": outline,
+    })
+
+
+@login_required
+def course_outline_save_view(request, pk):
+    """Enregistre les leçons choisies dans l'aperçu du plan."""
+    denied = _require_role(request, "CREATOR", "ADMIN")
+    if denied:
+        return denied
+    course = get_object_or_404(Course, pk=pk)
+    if course.creator != request.user and not request.user.is_superuser and getattr(request.user, "role", None) != "ADMIN":
+        messages.error(request, "Vous ne pouvez modifier que vos propres cours.")
+        return redirect("course_detail", pk=pk)
+    if request.method != "POST":
+        return redirect("course_edit", pk=pk)
+
+    saved = 0
+    with transaction.atomic():
+        next_order = (course.lessons.aggregate(max_order=Max("order"))["max_order"] or 0) + 1
+        for index in range(10):
+            if f"lesson_{index}_selected" not in request.POST:
+                continue
+            title = request.POST.get(f"lesson_{index}_title", "").strip()[:200]
+            description = request.POST.get(f"lesson_{index}_description", "").strip()
+            try:
+                duration = int(request.POST.get(f"lesson_{index}_duration", "0"))
+            except (TypeError, ValueError):
+                continue
+            if not title or duration <= 0:
+                continue
+            Lesson.objects.create(
+                course=course, title=title, description=description,
+                duration_seconds=duration, order=next_order,
+            )
+            next_order += 1
+            saved += 1
+    if saved:
+        messages.success(request, f"{saved} leçon(s) ajoutée(s) au cours.")
+    else:
+        messages.info(request, "Aucune leçon valide n'a été sélectionnée.")
+    return redirect("course_detail", pk=pk)
 
 
 # ==============================================================================

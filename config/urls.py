@@ -18,6 +18,7 @@ urlpatterns = [
     path('progression/', include('progress.urls')),
     path('', include('agent.urls')),
     path('gamification/', include('gamification.urls')),
+    path('lives/', include('lives.urls')),
     path('', include('django.contrib.auth.urls')),
 ]
 

@@ -21,6 +21,7 @@ dependencies = [
     "pillow>=13.0.0",
     "psycopg2-binary>=2.9.13",
     "python-dotenv>=1.0.0",
+    "requests>=2.34.2",
 ]
 
 [dependency-groups]

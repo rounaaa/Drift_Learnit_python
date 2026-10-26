@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Présences — {{ live.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <div style="margin-bottom: 1.25rem;">
+        <a href="{% url 'live_detail' live.pk %}" style="text-decoration: none; color: var(--text-muted); font-weight: 600;">← Retour au live</a>
+    </div>
+
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.25rem;">
+        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">Présence — {{ live.title }}</h1>
+        <p style="color: var(--text-muted); margin: 0;">Pour chaque apprenant inscrit, choisissez s’il est présent ou absent.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: grid; gap: 1rem;">
+            {% for row in rows %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <strong>{{ row.registration.user.username }}</strong>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">{{ row.registration.user.email }}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Taux global : {{ row.rate|floatformat:2 }}</span>
+                        <select name="present_{{ row.registration.user_id }}" class="form-select" style="max-width: 180px;">
+                            <option value="0" {% if not row.is_present %}selected{% endif %}>Absent</option>
+                            <option value="1" {% if row.is_present %}selected{% endif %}>Présent</option>
+                        </select>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 2rem; text-align: center;">
+                    <p style="color: var(--text-muted); margin: 0;">Aucun apprenant inscrit pour ce live.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if rows %}
+            <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

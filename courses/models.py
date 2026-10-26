@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -40,6 +41,13 @@ class Course(models.Model):
         choices=Status.choices,
         default=Status.DRAFT,
         verbose_name="Statut",
+    )
+    course_file = models.FileField(
+        upload_to="courses/pdfs/",
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
+        verbose_name="Document PDF du cours",
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,

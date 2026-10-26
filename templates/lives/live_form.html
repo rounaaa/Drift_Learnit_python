@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 1.25rem; text-align: center;">{{ title }}</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="form-error">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap;">
+            <a href="{% url 'live_list' %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">{{ action_text }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

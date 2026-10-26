@@ -6,13 +6,14 @@ from .models import Course, Lesson, Enrollment
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ["title", "category", "description", "level", "status"]
+        fields = ["title", "category", "description", "level", "status", "course_file"]
         labels = {
             "title": "Titre du cours",
             "category": "Catégorie / Discipline",
             "description": "Description détaillée",
             "level": "Niveau requis",
             "status": "Statut de publication",
+            "course_file": "Document PDF du cours (facultatif)",
         }
         widgets = {
             "title": forms.TextInput(
@@ -33,6 +34,7 @@ class CourseForm(forms.ModelForm):
             ),
             "level": forms.Select(attrs={"class": "form-select"}),
             "status": forms.Select(attrs={"class": "form-select"}),
+            "course_file": forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf"}),
         }
 
 
