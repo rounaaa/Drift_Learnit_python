@@ -30,6 +30,8 @@ ENV/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+db_learnit
+db_learnit-*
 media/
 !media/.gitkeep
 

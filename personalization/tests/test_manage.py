@@ -75,9 +75,9 @@ class SavedSearchCrudTests(BaseSearchTestCase):
         response = self.client.get(url("saved-list"))
         row = response.context["rows"][0]
         self.assertEqual(row["saved"], saved)
-        self.assertEqual(row["new_count"], 1)  # Django débutant, publié il y a 3 jours
+        self.assertEqual(row["new_count"], 2)  # Un cours et une vidéo publiés depuis la dernière visite
         self.assertEqual(row["total"], 3)      # 2 cours + 1 vidéo
-        self.assertContains(response, "1 nouveau contenu")
+        self.assertContains(response, "2 nouveaux contenus")
 
     def test_open_resets_new_results_and_redirects(self):
         saved = SavedSearch.objects.create(user=self.learner, name="Django", query="django", level="BEGINNER",

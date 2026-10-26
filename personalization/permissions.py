@@ -24,4 +24,3 @@ def search_admin_required(view):
         return view(request, *args, **kwargs)
 
     return wrapper
-

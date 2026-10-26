@@ -11,12 +11,13 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('courses.urls')),
-    path('', include('users.urls')),
     path('videos/', include('videos.urls')),
-    path('progression/', include('progress.urls')),
     path('recherche/', include('personalization.urls')),
+    path('', include('courses.urls')),
+    path('', include('users.urls')),   
+    path('progression/', include('progress.urls')),
     path('', include('agent.urls')),
+    path('gamification/', include('gamification.urls')),
     path('', include('django.contrib.auth.urls')),
 ]
 

@@ -243,7 +243,7 @@ class AdaptabilityTests(BaseSearchTestCase):
     """Le module doit fonctionner avec le modèle Video actuel de l'équipe (seulement un titre)."""
 
     def test_video_without_status_date_or_category(self):
-        make_video("Docker en 10 minutes")
+        make_video("Docker en 10 minutes", creator=self.creator)
         self.assertEqual(self.titles(search(q="docker")), ["Docker en 10 minutes"])
 
     def test_categories_come_from_course_choices(self):

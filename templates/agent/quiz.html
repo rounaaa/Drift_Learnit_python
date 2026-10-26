@@ -519,6 +519,176 @@
     flex-wrap: wrap;
     margin-top: 1.5rem;
   }
+  /* ═══════════════════════════════════════════════════════
+     GAMIFICATION REWARD BOX & CELEBRATION
+  ═══════════════════════════════════════════════════════ */
+  .gamification-reward-box {
+    margin: 1.5rem 0;
+    text-align: left;
+    background: #ffffff;
+    border: 2px solid #818cf8;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+  }
+
+  .level-up-banner {
+    background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #8b5cf6 100%);
+    color: white;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    animation: pulseGlow 2s infinite alternate;
+  }
+
+  @keyframes pulseGlow {
+    0% { transform: scale(1); filter: brightness(1); }
+    100% { transform: scale(1.01); filter: brightness(1.08); }
+  }
+
+  .level-up-icon {
+    font-size: 2.2rem;
+  }
+
+  .level-up-heading {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .level-up-sub {
+    font-size: 0.92rem;
+    font-weight: 600;
+    opacity: 0.95;
+  }
+
+  .xp-earned-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.2rem;
+  }
+
+  .xp-earned-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .xp-earned-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .xp-bolt {
+    font-size: 2rem;
+    background: #fef3c7;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+  }
+
+  .xp-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .xp-amount {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #4f46e5;
+    line-height: 1;
+  }
+
+  .xp-breakdown-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .xp-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+
+  .xp-pill.bonus {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .level-progress-strip {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+  }
+
+  .strip-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    color: var(--text-main);
+  }
+
+  .strip-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .strip-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #10b981);
+    border-radius: 9999px;
+    transition: width 1s ease-out;
+  }
+
+  .strip-footer {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    text-align: right;
+  }
+
+  .new-badges-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .new-badge-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  }
 </style>
 {% endblock %}
 
@@ -717,6 +887,60 @@
       <span class="score-total" id="res-percent">100%</span>
     </div>
 
+        <!-- GAMIFICATION XP & LEVEL UP CELEBRATION BOX -->
+    <div id="gamification-reward-box" class="gamification-reward-box" style="display: none;">
+      <!-- LEVEL UP BANNER -->
+      <div id="level-up-banner" class="level-up-banner" style="display: none;">
+        <div class="level-up-icon">🆙</div>
+        <div>
+          <div class="level-up-heading">LEVEL UP ! MONTÉE DE NIVEAU !</div>
+          <div class="level-up-sub" id="level-up-text">Niveau supérieur atteint !</div>
+        </div>
+      </div>
+
+      <!-- XP EARNED CARD -->
+      <div class="xp-earned-card">
+        <div class="xp-earned-header">
+          <div class="xp-earned-left">
+            <span class="xp-bolt">⚡</span>
+            <div>
+              <div class="xp-label">Expérience acquise</div>
+              <div class="xp-amount" id="xp-counter-val">+0 XP</div>
+            </div>
+          </div>
+          <div class="xp-breakdown-pills" id="xp-breakdown-container">
+            <!-- Rempli en JS -->
+          </div>
+        </div>
+
+        <div class="level-progress-strip">
+          <div class="strip-header">
+            <span id="strip-current-level">Niveau 1</span>
+            <span id="strip-next-goal">Objectif XP</span>
+          </div>
+          <div class="strip-bar-bg">
+            <div class="strip-bar-fill" id="strip-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="strip-footer" id="strip-footer-text">Calcul de vos points en cours...</div>
+        </div>
+      </div>
+
+      <!-- NOUVEAUX BADGES DÉBLOQUÉS -->
+      <div id="new-badges-container" style="display: none; margin-top: 1rem;">
+        <div style="font-size: 0.95rem; font-weight: 800; color: #15803d; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+          <span>🎖️</span> Nouveau badge débloqué !
+        </div>
+        <div class="new-badges-list" id="new-badges-list"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Vos progrès et points sont automatiquement sauvegardés.</span>
+        <a href="{% url 'gamification_dashboard' %}" class="btn btn-sm btn-secondary" style="font-weight: 700; color: #4f46e5; border-color: #c7d2fe;">
+          🏆 Voir mon profil & classement complet &rarr;
+        </a>
+      </div>
+    </div>
+
     <!-- Récapitulatif détaillé -->
     <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); text-align: left; margin-top: 1.5rem;">
       📋 Récapitulatif des réponses
@@ -745,6 +969,7 @@
 <script>
   // ─── Variables d'état du Quiz ──────────────────────────────────────────────
   const GENERATE_URL = "{% url 'agent_quiz_generate' %}";
+  const COMPLETE_QUIZ_URL = "{% url 'gamification_quiz_complete' %}";
   const CSRF_TOKEN = "{{ csrf_token }}";
 
   let currentQuiz = null;
@@ -1033,9 +1258,125 @@
     });
 
     window.scrollTo({ top: 100, behavior: "smooth" });
+    submitGamificationResults(userScore, total);
   }
 
   // ─── Actions Recommencer & Configurer ──────────────────────────────────────
+  // ─── Gamification AJAX & Animations ────────────────────────────────────────
+  async function submitGamificationResults(score, total) {
+    const rewardBox = document.getElementById("gamification-reward-box");
+    if (!rewardBox) return;
+
+    rewardBox.style.display = "block";
+    const topic = (currentQuiz && currentQuiz.topic) ? currentQuiz.topic : (topicInput.value || "Quiz d'évaluation");
+    const level = (currentQuiz && currentQuiz.level) ? currentQuiz.level : "BEGINNER";
+
+    try {
+      const resp = await fetch(COMPLETE_QUIZ_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": CSRF_TOKEN,
+        },
+        body: JSON.stringify({
+          topic: topic,
+          level: level,
+          score: score,
+          total_questions: total
+        })
+      });
+
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        // Animer le compteur d'XP
+        animateXpCounter(data.xp_earned);
+
+        // Afficher les détails du calcul d'XP
+        const breakdownCont = document.getElementById("xp-breakdown-container");
+        breakdownCont.innerHTML = "";
+        const appendXpPill = (text, bonus = false) => {
+          const pill = document.createElement("span");
+          pill.className = bonus ? "xp-pill bonus" : "xp-pill";
+          pill.textContent = text;
+          breakdownCont.appendChild(pill);
+        };
+        if (data.breakdown) {
+          appendXpPill(`Participation : +${data.breakdown.base} XP`);
+          appendXpPill(`Bonnes réponses : +${data.breakdown.correct_answers} XP`);
+          if (data.breakdown.multiplier > 1.0) {
+            appendXpPill(`Multiplicateur de niveau ×${data.breakdown.multiplier}`, true);
+          }
+          if (data.breakdown.perfect_bonus > 0) {
+            appendXpPill(`🏆 Sans-faute : +${data.breakdown.perfect_bonus} XP`, true);
+          }
+          if (data.breakdown.high_score_bonus > 0) {
+            appendXpPill(`⭐ Bon score : +${data.breakdown.high_score_bonus} XP`, true);
+          }
+        }
+
+        // Barre de progression
+        document.getElementById("strip-current-level").textContent = "Niveau " + data.new_level + " : " + data.level_title;
+        document.getElementById("strip-next-goal").textContent = data.next_level_name ? ("Prochain : " + data.next_level_name) : "Niveau Max ! 👑";
+        setTimeout(() => {
+          document.getElementById("strip-bar-fill").style.width = data.progress_percent + "%";
+        }, 200);
+        document.getElementById("strip-footer-text").textContent = "Total : " + data.total_xp + " XP · Encore " + data.xp_remaining + " XP pour le palier suivant (" + data.progress_percent + "%)";
+
+        // Montée de niveau ?
+        if (data.leveled_up) {
+          const lvlBanner = document.getElementById("level-up-banner");
+          document.getElementById("level-up-text").textContent = "Félicitations ! Vous passez du Niveau " + data.old_level + " au Niveau " + data.new_level + " : " + data.level_title + " ! 🎉";
+          lvlBanner.style.display = "flex";
+        }
+
+        // Badges débloqués ?
+        if (data.unlocked_badges && data.unlocked_badges.length > 0) {
+          const badgesCont = document.getElementById("new-badges-container");
+          const badgesList = document.getElementById("new-badges-list");
+          badgesList.innerHTML = "";
+          data.unlocked_badges.forEach(b => {
+            const item = document.createElement("div");
+            item.className = "new-badge-item";
+            const icon = document.createElement("span");
+            icon.style.fontSize = "1.6rem";
+            icon.textContent = b.icon;
+            const details = document.createElement("div");
+            const name = document.createElement("strong");
+            name.style.cssText = "color: #065f46; font-size: 0.9rem;";
+            name.textContent = b.name;
+            const description = document.createElement("div");
+            description.style.cssText = "font-size: 0.78rem; color: #047857;";
+            description.textContent = `${b.description} (+${b.xp_bonus} XP)`;
+            details.append(name, description);
+            item.append(icon, details);
+            badgesList.appendChild(item);
+          });
+          badgesCont.style.display = "block";
+        }
+      }
+    } catch (e) {
+      console.error("Erreur gamification:", e);
+    }
+  }
+
+  function animateXpCounter(targetVal) {
+    const el = document.getElementById("xp-counter-val");
+    if (!el) return;
+    let current = 0;
+    const duration = 1200;
+    const steps = 30;
+    const increment = targetVal / steps;
+    const stepTime = duration / steps;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= targetVal) {
+        current = targetVal;
+        clearInterval(timer);
+      }
+      el.textContent = "+" + Math.round(current) + " XP";
+    }, stepTime);
+  }
+
   function retryCurrentQuiz() {
     if (currentQuiz) {
       startQuiz(currentQuiz);

@@ -1,9 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}LearnIt — Plateforme d'apprentissage moderne{% endblock %}</title>
+    <title>{% block title %}LearnIt â€” Plateforme d'apprentissage moderne{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -54,43 +55,51 @@
         .navbar-wrapper {
             position: sticky;
             top: 0;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.85);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         }
 
         .navbar {
-            max-width: 1200px;
+            max-width: 1440px;
+            width: 100%;
             margin: 0 auto;
-            padding: 0.85rem 1.5rem;
+            padding: 0.65rem 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 0.75rem 1.5rem;
+            
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            min-width: 0;
+            flex-shrink: 1;
         }
 
         .brand-logo {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.6rem;
             text-decoration: none;
             font-weight: 800;
             font-size: 1.35rem;
             color: var(--text-main);
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .brand-badge {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+            display: block;
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
 
         .nav-links {
@@ -100,18 +109,27 @@
             justify-content: flex-end;
             flex-wrap: wrap;
             gap: 0.35rem 0.6rem;
+            align-items: center;
+            gap: 0.35rem;
             list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: nowrap;
         }
 
         .nav-link {
             text-decoration: none;
             color: var(--text-muted);
             font-weight: 600;
-            font-size: 0.92rem;
-            padding: 0.45rem 0.8rem;
+            font-size: 0.88rem;
+            padding: 0.45rem 0.65rem;
             border-radius: var(--radius-sm);
             transition: var(--transition);
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
         }
 
         .nav-link:hover, .nav-link.active {
@@ -119,11 +137,87 @@
             background: var(--primary-light);
         }
 
+        .nav-menu { position: relative; }
+        .nav-menu summary { cursor: pointer; list-style: none; }
+        .nav-menu summary::-webkit-details-marker { display: none; }
+        .nav-menu summary::after { content: "▾"; font-size: 0.7em; margin-left: 0.35rem; }
+        .nav-dropdown {
+            position: absolute;
+            top: calc(100% + 0.45rem);
+            left: 0;
+            z-index: 1010;
+            display: grid;
+            min-width: 220px;
+            padding: 0.45rem;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+        }
+        .nav-dropdown-link {
+            display: block;
+            padding: 0.6rem 0.7rem;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            white-space: nowrap;
+        }
+        .nav-dropdown-link:hover, .nav-dropdown-link:focus-visible {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .nav-user-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+        .nav-xp-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            text-decoration: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+            transition: var(--transition);
+        }
+
+        .nav-xp-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .nav-user-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
         .btn-create-course {
             background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white !important;
-            padding: 0.5rem 1rem !important;
+            padding: 0.45rem 0.85rem !important;
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            white-space: nowrap;
         }
 
         .btn-create-course:hover {
@@ -294,9 +388,20 @@
             color: var(--text-muted);
         }
 
+        @media (max-width: 1250px) {
+            .navbar { flex-wrap: wrap; gap: 0.75rem; }
+            .nav-links { flex-wrap: wrap; gap: 0.3rem; }
+            .nav-user-actions { margin-left: 0; }
+        }
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 1rem; align-items: flex-start; }
             .nav-links { flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+            
+            .navbar-left { flex-direction: column; align-items: flex-start; width: 100%; gap: 0.75rem; }
+            
+            .nav-user-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+            .nav-menu { position: static; }
+            .nav-dropdown { position: static; min-width: 0; width: 100%; box-shadow: none; margin: 0.25rem 0 0.5rem; }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -304,59 +409,105 @@
 <body>
     <header class="navbar-wrapper">
         <nav class="navbar">
-            <a href="{% if user.is_authenticated and user.role == 'LEARNER' %}{% url 'videos:learner_feed' %}{% else %}{% url 'course_catalog' %}{% endif %}" class="brand-logo">
-                <div class="brand-badge">⚡</div>
-                <span>Learn<span style="color: var(--primary);">It</span></span>
-            </a>
-            <ul class="nav-links">
-                                <li><a href="{% url 'personalization:search' %}" class="nav-link {% if request.resolver_match.namespace == 'personalization' %}active{% endif %}">🔍 Rechercher</a></li>
-                {% if user.is_authenticated %}
-                    {% if user.role == "LEARNER" %}
-                        <!-- PAGES DE L'APPRENANT -->
-                        <li><a href="{% url 'videos:learner_feed' %}" class="nav-link">🎬 Fil de vidéos</a></li>
-                        <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
-                        <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
-                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
-                        <li><a href="{% url 'agent_chat' %}" class="nav-link" style="color: #8b5cf6; font-weight: 700;">🤖 Conseiller IA</a></li>
-                        <li><a href="{% url 'progress:dashboard' %}" class="nav-link">📊 Ma progression</a></li>
-                        <li><a href="{% url 'progress:history' %}" class="nav-link">🕘 Historique</a></li>
-
-                    {% elif user.role == "CREATOR" %}
-                        <!-- PAGES DU FORMATEUR -->
-                        <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes cours</a></li>
-                        <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
-                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
-                        <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
-                        <li><a href="{% url 'videos:my_videos' %}" class="nav-link">🎬 Mes vidéos</a></li>
-                        <li><a href="{% url 'videos:video_create' %}" class="nav-link btn-create-course">+ Vidéo</a></li>
-                        
+            <div class="navbar-left">
+                <a href="{% if user.is_authenticated and user.role == 'LEARNER' %}{% url 'videos:learner_feed' %}{% else %}{% url 'course_catalog' %}{% endif %}" class="brand-logo">
+                    <img class="brand-badge" src="{% static 'images/learnit-logo.png' %}" alt="">
+                    <span>Learn<span style="color: var(--primary);">It</span></span>
+                </a>
+                <ul class="nav-links">
+                    {% if user.is_authenticated %}
+                        {% if user.role == "LEARNER" %}
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Apprendre</summary>
+                                <div class="nav-dropdown" aria-label="Navigation apprentissage">
+                                    <a class="nav-dropdown-link" href="{% url 'videos:learner_feed' %}">Fil de vid&eacute;os</a>
+                                    <a class="nav-dropdown-link" href="{% url 'course_catalog' %}">Catalogue des cours</a>
+                                    <a class="nav-dropdown-link" href="{% url 'my_enrollments' %}">Mes inscriptions</a>
+                                    <a class="nav-dropdown-link" href="{% url 'progress:dashboard' %}">Ma progression</a>
+                                    <a class="nav-dropdown-link" href="{% url 'progress:course_list' %}">Mes cours suivis</a>
+                                    <a class="nav-dropdown-link" href="{% url 'progress:activity_history' %}">Historique d'apprentissage</a>
+                                </div>
+                            </details></li>
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">D&eacute;couvrir</summary>
+                                <div class="nav-dropdown" aria-label="Recherche et recommandations">
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:search' %}">Recherche intelligente</a>
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:recommendations' %}">Recommandations</a>
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:preferences' %}">Mes centres d'int&eacute;r&ecirc;t</a>
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:saved-list' %}">Recherches sauvegard&eacute;es</a>
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:watchlist-list' %}">&Agrave; regarder plus tard</a>
+                                </div>
+                            </details></li>
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Accompagnement</summary>
+                                <div class="nav-dropdown" aria-label="Outils d'accompagnement">
+                                    <a class="nav-dropdown-link" href="{% url 'agent_quiz' %}">Quiz IA</a>
+                                    <a class="nav-dropdown-link" href="{% url 'agent_chat' %}">Conseiller p&eacute;dagogique</a>
+                                    <a class="nav-dropdown-link" href="{% url 'gamification_dashboard' %}">Badges, XP et classement</a>
+                                </div>
+                            </details></li>
+                        {% elif user.role == "CREATOR" %}
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Mes contenus</summary>
+                                <div class="nav-dropdown" aria-label="Gestion des contenus">
+                                    <a class="nav-dropdown-link" href="{% url 'my_courses' %}">Mes formations</a>
+                                    <a class="nav-dropdown-link" href="{% url 'course_create' %}">Cr&eacute;er un cours</a>
+                                    <a class="nav-dropdown-link" href="{% url 'videos:my_videos' %}">Mes vid&eacute;os</a>
+                                    <a class="nav-dropdown-link" href="{% url 'videos:video_create' %}">Ajouter une vid&eacute;o</a>
+                                    <a class="nav-dropdown-link" href="{% url 'course_catalog' %}">Catalogue</a>
+                                </div>
+                            </details></li>
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Outils</summary>
+                                <div class="nav-dropdown" aria-label="Outils formateur">
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:search' %}">Recherche</a>
+                                    <a class="nav-dropdown-link" href="{% url 'agent_quiz' %}">Quiz IA</a>
+                                    <a class="nav-dropdown-link" href="{% url 'gamification_dashboard' %}">Badges, XP et classement</a>
+                                </div>
+                            </details></li>
+                        {% else %}
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Administration</summary>
+                                <div class="nav-dropdown" aria-label="Administration">
+                                    <a class="nav-dropdown-link" href="{% url 'my_courses' %}">Tous les cours</a>
+                                    <a class="nav-dropdown-link" href="{% url 'course_create' %}">Cr&eacute;er un cours</a>
+                                    <a class="nav-dropdown-link" href="{% url 'videos:category_list' %}">Cat&eacute;gories vid&eacute;o</a>
+                                    <a class="nav-dropdown-link" href="{% url 'personalization:stats' %}">Recherche et statistiques</a>
+                                    <a class="nav-dropdown-link" href="/admin/">Administration Django</a>
+                                </div>
+                            </details></li>
+                            <li class="nav-menu"><details>
+                                <summary class="nav-link">Outils</summary>
+                                <div class="nav-dropdown" aria-label="Outils administrateur">
+                                    <a class="nav-dropdown-link" href="{% url 'agent_quiz' %}">Quiz IA</a>
+                                    <a class="nav-dropdown-link" href="{% url 'course_catalog' %}">Catalogue</a>
+                                    <a class="nav-dropdown-link" href="{% url 'gamification_dashboard' %}">Badges, XP et classement</a>
+                                </div>
+                            </details></li>
+                        {% endif %}
                     {% else %}
-                        <!-- PAGES DE L'ADMINISTRATEUR -->
-                        <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
-                        <li><a href="{% url 'videos:category_list' %}" class="nav-link">🎬 Catégories vidéo</a></li>
-                        <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
-                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
-                        <li><a href="/admin/" class="nav-link" style="color: #6366f1; font-weight: 700;">🛡️ Admin Django</a></li>
                     {% endif %}
-                    <!-- USER BADGE -->
-                    <li>
-                        <span style="background: #f1f5f9; border: 1px solid var(--border-color); padding: 0.4rem 0.8rem; border-radius: 9999px; font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
-                            {% if user.role == "LEARNER" %}🎓{% elif user.role == "CREATOR" %}👨‍🏫{% else %}🛡️{% endif %}
-                            {{ user.username }} · {{ user.get_role_display }}
-                        </span>
-                    </li>
-                    <li>
-                        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
-                        </form>
-                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-user-actions" aria-label="Espace utilisateur">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'gamification_dashboard' %}" class="nav-xp-badge" title="Niveau {{ user_gamification.current_level|default:1 }} - {{ user_gamification.total_xp|default:0 }} XP">
+                        <span>Niveau {{ user_gamification.current_level|default:1 }}</span>
+                        <span aria-hidden="true">|</span>
+                        <span>{{ user_gamification.total_xp|default:0 }} XP</span>
+                    </a>
+                    <span class="nav-user-pill">{{ user.username }} | {{ user.get_role_display }}</span>
+                    <form method="POST" action="{% url 'logout' %}" style="display:inline; margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.75rem; white-space: nowrap;">D&eacute;connexion</button>
+                    </form>
                 {% else %}
-                    <li><a href="{% url 'login' %}" class="nav-link">Connexion</a></li>
-                    <li><a href="{% url 'register' %}" class="nav-link btn-create-course">✨ S'inscrire</a></li>
+                    <a href="{% url 'login' %}" class="nav-link">Connexion</a>
+                    <a href="{% url 'register' %}" class="nav-link btn-create-course">S'inscrire</a>
                 {% endif %}
-            </ul>
+            </div>
         </nav>
     </header>
 
@@ -375,7 +526,7 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2026 LearnIt — Module 2 : Gestion des cours et inscriptions</p>
+        <p>&copy; 2026 LearnIt â€” Module 2 : Gestion des cours et inscriptions</p>
     </footer>
 
     {% if user.is_authenticated and user.role == "LEARNER" %}
@@ -421,7 +572,7 @@
                     });
                     const data = await response.json();
                     if (!response.ok || !data.success) {
-                        throw new Error(data.message || "La progression n'a pas pu être enregistrée.");
+                        throw new Error(data.message || "La progression n'a pas pu Ãªtre enregistrÃ©e.");
                     }
                     if (!data.tracked) return;
                     notify(data.message, true);

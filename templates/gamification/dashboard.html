@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}Gamification & Classement — LearnIt{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ═══════════════════════════════════════════════════════
+     GAMIFICATION HUB & LEADERBOARD STYLING
+  ═══════════════════════════════════════════════════════ */
+  .gamification-container {
+    max-width: 1050px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* HERO PROFILE CARD */
+  .gamification-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4f46e5 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 30px -6px rgba(79, 70, 229, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gamification-hero::before {
+    content: "⚡";
+    position: absolute;
+    right: 2rem;
+    bottom: -1.5rem;
+    font-size: 9rem;
+    opacity: 0.12;
+    pointer-events: none;
+    transform: rotate(15deg);
+  }
+
+  .hero-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .avatar-badge-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .hero-title-group h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .level-badge-tag {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .hero-rank-pill {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-md);
+    text-align: right;
+  }
+
+  .hero-rank-pill .rank-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #cbd5e1;
+  }
+
+  .hero-rank-pill .rank-val {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fde047;
+  }
+
+  /* PROGRESS BAR STYLING */
+  .xp-progress-block {
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-md);
+  }
+
+  .xp-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .xp-labels .current {
+    color: #fef08a;
+  }
+
+  .xp-bar-bg {
+    width: 100%;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24 0%, #10b981 100%);
+    border-radius: 9999px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+  }
+
+  .xp-subtext {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    margin-top: 0.5rem;
+    text-align: right;
+  }
+
+  /* STATS CARDS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.xp { background: #fef3c7; color: #b45309; }
+  .stat-icon.quiz { background: #e0e7ff; color: #4338ca; }
+  .stat-icon.trophy { background: #dcfce7; color: #15803d; }
+  .stat-icon.badge { background: #fae8ff; color: #86198f; }
+
+  .stat-info .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.1;
+  }
+
+  .stat-info .stat-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 0.2rem;
+  }
+
+  /* MAIN CONTENT TWO-COLUMN LAYOUT */
+  .gamification-grid-content {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 900px) {
+    .gamification-grid-content {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .section-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .section-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .section-card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  /* BADGES GRID */
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .badge-card {
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: var(--transition);
+    position: relative;
+    background: #fafafa;
+  }
+
+  .badge-card.unlocked {
+    background: #ffffff;
+    border-color: #a7f3d0;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+  }
+
+  .badge-card.locked {
+    opacity: 0.6;
+    filter: grayscale(0.7);
+    background: #f8fafc;
+  }
+
+  .badge-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .badge-card-icon {
+    font-size: 2.2rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border-radius: var(--radius-sm);
+  }
+
+  .badge-card.unlocked .badge-card-icon {
+    background: #ecfdf5;
+  }
+
+  .badge-card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-main);
+  }
+
+  .badge-card-xp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+  }
+
+  .badge-card-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .badge-status-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .badge-status-tag.unlocked-tag {
+    color: var(--success);
+  }
+
+  .badge-status-tag.locked-tag {
+    color: var(--text-muted);
+  }
+
+  /* LEADERBOARD LIST */
+  .leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    transition: var(--transition);
+  }
+
+  .leaderboard-item:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .leaderboard-item.current-user {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    font-weight: 700;
+  }
+
+  .leaderboard-left {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .rank-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    background: #f1f5f9;
+  }
+
+  .rank-badge.rank-1 { background: #fef08a; color: #854d0e; font-size: 1.15rem; }
+  .rank-badge.rank-2 { background: #e2e8f0; color: #475569; font-size: 1.15rem; }
+  .rank-badge.rank-3 { background: #fed7aa; color: #9a3412; font-size: 1.15rem; }
+
+  .leaderboard-user-name {
+    font-size: 0.92rem;
+    color: var(--text-main);
+  }
+
+  .leaderboard-user-title {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .leaderboard-right {
+    text-align: right;
+  }
+
+  .leaderboard-xp-val {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #4f46e5;
+  }
+
+  .leaderboard-lvl-tag {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* RECENT ACTIVITY TABS & LIST */
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+  }
+
+  .activity-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .activity-icon {
+    font-size: 1.25rem;
+  }
+
+  .activity-desc {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .activity-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .activity-xp-gain {
+    font-weight: 800;
+    color: var(--success);
+    font-size: 0.9rem;
+    background: #ecfdf5;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gamification-container">
+
+  <!-- HERO PROFILE BANNER -->
+  <div class="gamification-hero">
+    <div class="hero-top-row">
+      <div class="hero-user-info">
+        <div class="avatar-badge-circle">
+          {% if profile.current_level >= 8 %}👑{% elif profile.current_level >= 5 %}⭐{% elif profile.current_level >= 3 %}⚡{% else %}🐣{% endif %}
+        </div>
+        <div class="hero-title-group">
+          <h1>
+            {{ request.user.username }}
+            <span class="level-badge-tag">Niveau {{ profile.current_level }}</span>
+          </h1>
+          <p style="color: #e0e7ff; font-size: 1.05rem; font-weight: 600;">
+            Rang : <strong>{{ profile.level_title }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-rank-pill">
+        <div class="rank-label">Classement général</div>
+        <div class="rank-val">#{{ user_rank }}</div>
+      </div>
+    </div>
+
+    <!-- XP PROGRESSION BAR -->
+    <div class="xp-progress-block">
+      <div class="xp-labels">
+        <span>⚡ Expérience totale : <strong class="current">{{ profile.total_xp }} XP</strong></span>
+        <span>
+          {% if profile.next_level_info %}
+            Prochain palier (Nv. {{ profile.next_level_info.0 }}) : {{ profile.next_level_info.1 }} XP
+          {% else %}
+            Niveau maximum atteint ! 🏆
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="xp-bar-bg">
+        <div class="xp-bar-fill" style="width: {{ profile.progress_percent }}%;"></div>
+      </div>
+
+      <div class="xp-subtext">
+        {% if profile.next_level_info %}
+          Encore <strong>{{ profile.xp_remaining }} XP</strong> pour débloquer : {{ profile.next_level_info.2 }} ({{ profile.progress_percent }}% complété)
+        {% else %}
+          Félicitations, vous êtes au sommet du classement !
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS OVERVIEW -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon xp">⚡</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ profile.total_xp }}</div>
+        <div class="stat-label">Points d'XP cumulés</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon quiz">🎯</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ profile.quizzes_completed }}</div>
+        <div class="stat-label">Quiz IA complétés</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon trophy">🏆</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ profile.perfect_quizzes }}</div>
+        <div class="stat-label">Quiz sans-faute (100%)</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon badge">🎖️</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ unlocked_count }} / {{ total_badges_count }}</div>
+        <div class="stat-label">Badges débloqués</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TWO-COLUMN MAIN GRID -->
+  <div class="gamification-grid-content">
+
+    <!-- LEFT COLUMN: BADGES & ACHIEVEMENTS -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2>🎖️ Galerie des Badges & Trophées</h2>
+          <span style="font-size: 0.85rem; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 0.25rem 0.65rem; border-radius: 9999px;">
+            {{ unlocked_count }} débloqué{{ unlocked_count|pluralize }}
+          </span>
+        </div>
+
+        <div class="badges-grid">
+          {% for item in badges_data %}
+            <div class="badge-card {% if item.is_unlocked %}unlocked{% else %}locked{% endif %}">
+              <div class="badge-card-header">
+                <div class="badge-card-icon">{{ item.badge.icon }}</div>
+                <div style="flex:1;">
+                  <div class="badge-card-title">{{ item.badge.name }}</div>
+                  <span class="badge-card-xp">+{{ item.badge.xp_bonus }} XP</span>
+                </div>
+              </div>
+              <p class="badge-card-desc">{{ item.badge.description }}</p>
+              <div class="badge-status-tag {% if item.is_unlocked %}unlocked-tag{% else %}locked-tag{% endif %}">
+                {% if item.is_unlocked %}
+                  ✅ Débloqué le {{ item.awarded_at|date:"d/m/Y à H:i" }}
+                {% else %}
+                  🔒 Verrouillé — Déblocable via les quiz
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- RECENT ATTEMPTS -->
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2>📝 Historique récent de vos Quiz</h2>
+          <a href="{% url 'agent_quiz' %}" class="btn btn-primary btn-sm">🎯 Nouveau Quiz</a>
+        </div>
+
+        {% if recent_attempts %}
+          <div class="activity-list">
+            {% for a in recent_attempts %}
+              <div class="activity-item">
+                <div class="activity-left">
+                  <span class="activity-icon">{% if a.percentage == 100 %}🏆{% elif a.percentage >= 80 %}🎉{% else %}💡{% endif %}</span>
+                  <div>
+                    <div class="activity-desc">{{ a.topic }}</div>
+                    <div class="activity-date">Score : {{ a.score }}/{{ a.total_questions }} ({{ a.percentage }}%) · Niveau {{ a.level }} · {{ a.created_at|date:"d/m/Y H:i" }}</div>
+                  </div>
+                </div>
+                <span class="activity-xp-gain">+{{ a.xp_earned }} XP</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎯</div>
+            <p style="font-weight: 600;">Vous n'avez pas encore passé de quiz IA.</p>
+            <p style="font-size: 0.85rem; margin-bottom: 1rem;">Générez votre premier quiz pour commencer à accumuler de l'XP et monter de niveau !</p>
+            <a href="{% url 'agent_quiz' %}" class="btn btn-primary">Lancer mon premier Quiz IA</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: LEADERBOARD & RECENT XP TRANSACTIONS -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+      <!-- LEADERBOARD -->
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2>🏆 Classement Général</h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Top Apprenants</span>
+        </div>
+
+        {% if leaderboard %}
+          <div class="leaderboard-list">
+            {% for item in leaderboard %}
+              <div class="leaderboard-item {% if item.user == request.user %}current-user{% endif %}">
+                <div class="leaderboard-left">
+                  <div class="rank-badge rank-{{ forloop.counter }}">
+                    {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+                  </div>
+                  <div>
+                    <div class="leaderboard-user-name">
+                      {{ item.user.username }}
+                      {% if item.user == request.user %}<span style="font-size: 0.7rem; color: #4f46e5; font-weight: 800;">(Vous)</span>{% endif %}
+                    </div>
+                    <div class="leaderboard-user-title">{{ item.level_title }}</div>
+                  </div>
+                </div>
+                <div class="leaderboard-right">
+                  <div class="leaderboard-xp-val">{{ item.total_xp }} XP</div>
+                  <div class="leaderboard-lvl-tag">Nv. {{ item.current_level }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+            Soyez le premier à gagner de l'XP pour dominer le classement !
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- RECENT XP TRANSACTIONS -->
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2>⚡ Journal des Gains d'XP</h2>
+        </div>
+
+        {% if recent_transactions %}
+          <div class="activity-list">
+            {% for t in recent_transactions %}
+              <div class="activity-item">
+                <div class="activity-left">
+                  <span class="activity-icon">{% if t.source == "BADGE" %}🎖️{% else %}⚡{% endif %}</span>
+                  <div>
+                    <div class="activity-desc">{{ t.reason }}</div>
+                    <div class="activity-date">{{ t.created_at|date:"d/m/Y à H:i" }}</div>
+                  </div>
+                </div>
+                <span class="activity-xp-gain">+{{ t.amount }} XP</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--text-muted); font-size: 0.88rem; text-align: center; padding: 1.5rem 0;">
+            Aucune transaction d'XP enregistrée pour l'instant.
+          </p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

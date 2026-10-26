@@ -10,7 +10,6 @@ au projet LearnIt. Chaque valeur peut être surchargée par un réglage SEARCH_*
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
-from django.db import models
 
 VIDEO_MODEL = getattr(settings, "SEARCH_VIDEO_MODEL", "videos.Video")
 COURSE_MODEL = getattr(settings, "SEARCH_COURSE_MODEL", "courses.Course")
@@ -78,20 +77,45 @@ def category_labels():
 
 
 def has_category(model):
-    """Vrai si le modèle a un champ texte « category » qui utilise les codes de la plateforme."""
-    if not has_field(model, "category"):
-        return False
-    return not isinstance(model._meta.get_field("category"), models.ForeignKey)
+    """Vrai si le modèle a un champ catégorie, texte ou relationnel."""
+    return has_field(model, "category")
+
+
+def category_is_relation(model):
+    return has_category(model) and model._meta.get_field("category").is_relation
+
+
+def category_code_for_value(value):
+    """Normalise un code, un libellé ou un objet Category vers le code plateforme."""
+    if value is None:
+        return None
+    value = getattr(value, "name", value)
+    value = str(value)
+    normalized = value.casefold()
+    for code, label in category_choices():
+        if normalized in (code.casefold(), label.casefold()):
+            return code
+    return value or None
 
 
 def category_code(obj):
     if obj is None or not has_category(type(obj)):
         return None
-    return getattr(obj, "category", None) or None
+    return category_code_for_value(getattr(obj, "category", None))
 
 
 def category_label(code):
     return category_labels().get(code, code) if code else ""
+
+
+def category_filter_kwargs(model, codes):
+    """Construit un filtre compatible avec les catégories texte et FK."""
+    if category_is_relation(model):
+        labels = category_labels()
+        names = set(codes)
+        names.update(labels[code] for code in codes if code in labels)
+        return {"category__name__in": sorted(names)}
+    return {"category__in": codes}
 
 
 # --------------------------------------------------------------------------

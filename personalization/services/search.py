@@ -125,7 +125,12 @@ def keyword_query(groups, model):
         for term in alternatives:
             for f in fields:
                 group_condition |= Q(**{f"{f}__icontains": term})
-            if with_category:
+            if conf.category_is_relation(model):
+                group_condition |= Q(category__name__icontains=term)
+                codes = _matching_category_codes(term)
+                if codes:
+                    group_condition |= Q(**conf.category_filter_kwargs(model, codes))
+            elif with_category:
                 codes = _matching_category_codes(term)
                 if codes:
                     group_condition |= Q(category__in=codes)
@@ -165,7 +170,7 @@ def _filtered(model, params, preferred_categories, preferred_level, groups):
     if codes:
         if not conf.has_category(model):
             return model.objects.none()
-        qs = qs.filter(category__in=codes)
+        qs = qs.filter(**conf.category_filter_kwargs(model, codes))
 
     # Filtre niveau (US32) : seuls les modèles qui ont un niveau (les cours) correspondent.
     level = params.level or (preferred_level if params.interests_only else "")

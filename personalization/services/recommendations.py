@@ -103,10 +103,15 @@ def collect_signals(user):
     History = _history_model()
     if History is not None:
         Video = conf.video_model()
-        fields = ["video_id"] + (["video__category"] if conf.has_category(Video) else [])
+        category_field = (
+            "video__category__name"
+            if conf.category_is_relation(Video)
+            else "video__category"
+        )
+        fields = ["video_id"] + ([category_field] if conf.has_category(Video) else [])
         for row in History.objects.filter(user=user).values(*fields):
             watched_video_ids.add(row["video_id"])
-            code = row.get("video__category")
+            code = conf.category_code_for_value(row.get(category_field))
             if code:
                 history_category_counts[code] = history_category_counts.get(code, 0) + 1
 

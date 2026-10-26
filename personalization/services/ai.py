@@ -270,7 +270,7 @@ def similar_contents(kind, obj, limit=6):
     for other_kind, model in models.items():
         if model is None or not code or not conf.has_category(model):
             continue
-        qs = published(model).filter(category=code)
+        qs = published(model).filter(**conf.category_filter_kwargs(model, [code]))
         if other_kind == kind:
             qs = qs.exclude(pk=obj.pk)
         order = "-_date" if conf.date_fields(model) else "-pk"

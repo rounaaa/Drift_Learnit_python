@@ -4,9 +4,12 @@ Les vidéos ne reçoivent que les champs que le modèle Video possède vraiment 
 les tests restent valables quand le module Vidéos ajoutera ses champs.
 """
 from datetime import timedelta
+from tempfile import TemporaryDirectory
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils import timezone
 
 from personalization import conf
@@ -23,26 +26,58 @@ def make_video(title, description="", category=None, days_ago=None, **extra):
     fields = {"title": title}
     optional = {
         "description": description,
-        "category": category,
         "status": conf.PUBLISHED_STATUS,
         "published_at": timezone.now() - timedelta(days=days_ago) if days_ago is not None else None,
         "video_url": "https://example.com/video.mp4",
+        "duration_seconds": 60,
     }
     for name, value in {**optional, **extra}.items():
         if value is not None and conf.has_field(Video, name):
-            if name == "category" and not conf.has_category(Video):
-                continue
             fields[name] = value
-    return Video.objects.create(**fields)
+    if conf.has_category(Video):
+        category_field = Video._meta.get_field("category")
+        if category_field.is_relation:
+            category_model = category_field.remote_field.model
+            category_name = conf.category_label(category) if category else "Autre"
+            fields["category"], _ = category_model.objects.get_or_create(name=category_name)
+        elif category is not None:
+            fields["category"] = category
+    if conf.has_field(Video, "video_file"):
+        fields["video_file"] = SimpleUploadedFile(
+            "personalization-test.mp4",
+            b"test video",
+            content_type="video/mp4",
+        )
+    video = Video.objects.create(**fields)
+    if days_ago is not None and conf.has_field(Video, "published_at"):
+        video.published_at = timezone.now() - timedelta(days=days_ago)
+        Video.objects.filter(pk=video.pk).update(published_at=video.published_at)
+    return video
 
 
 class BaseSearchTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
-        super().setUpClass()
+        cls.media_directory = TemporaryDirectory()
+        cls.media_settings = override_settings(MEDIA_ROOT=cls.media_directory.name)
+        cls.media_settings.enable()
+        try:
+            super().setUpClass()
+        except Exception:
+            cls.media_settings.disable()
+            cls.media_directory.cleanup()
+            raise
         from personalization.services import ai
 
         ai.reset_index()  # US40 : chaque classe de tests repart d'un index IA neuf
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super().tearDownClass()
+        finally:
+            cls.media_settings.disable()
+            cls.media_directory.cleanup()
 
     @classmethod
     def setUpTestData(cls):
@@ -59,8 +94,10 @@ class BaseSearchTestCase(TestCase):
         cls.c_draft = cls._course("Django brouillon", "Pas encore publié", INFO, "BEGINNER", None, status="DRAFT")
         cls.c_archived = cls._course("Django archivé", "Ancien cours", INFO, "BEGINNER", 1, status="ARCHIVED")
 
-        cls.v_intro = make_video("Introduction à Django", "Premier projet", INFO, days_ago=1)
-        cls.v_pandas = make_video("Pandas pour l'analyse de données", "DataFrames", MATHS, days_ago=5)
+        cls.v_intro = make_video("Introduction à Django", "Premier projet", INFO, days_ago=1,
+                                 creator=cls.creator)
+        cls.v_pandas = make_video("Pandas pour l'analyse de données", "DataFrames", MATHS, days_ago=5,
+                                  creator=cls.creator)
 
     @classmethod
     def _course(cls, title, description, category, level, days_ago, status="PUBLISHED"):
