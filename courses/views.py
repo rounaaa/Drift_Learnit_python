@@ -1,9 +1,13 @@
+import json
+
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Count, Sum, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
+from .ai import generate_course_outline
 from .forms import CourseForm, LessonForm
 from .models import Course, Lesson, Enrollment
 
@@ -20,6 +24,91 @@ def _require_role(request, *allowed_roles):
             "required_roles": allowed_roles,
         }, status=403)
     return None
+
+
+@login_required
+def course_outline_generate_view(request, pk):
+    course = get_object_or_404(Course.objects.select_related("creator"), pk=pk)
+    if course.creator != request.user and not request.user.is_superuser and getattr(request.user, "role", None) != "ADMIN":
+        messages.error(request, "Vous ne pouvez proposer un plan que pour vos propres cours.")
+        return redirect("course_detail", pk=course.pk)
+    if request.method != "POST":
+        messages.error(request, "Cette action attend une requête POST.")
+        return redirect("course_edit", pk=course.pk)
+
+    outline = generate_course_outline(course.title, course.description, course.level)
+    request.session["pending_outline"] = json.dumps(outline)
+    request.session["pending_outline_course_id"] = course.pk
+    return render(request, "courses/course_form.html", {
+        "form": CourseForm(instance=course),
+        "course": course,
+        "title": f"Modifier : {course.title}",
+        "action_text": "Mettre à jour",
+        "outline_preview": outline,
+        "outline_available": True,
+    })
+
+
+@login_required
+def course_outline_save_view(request, pk):
+    course = get_object_or_404(Course.objects.select_related("creator"), pk=pk)
+    if course.creator != request.user and not request.user.is_superuser and getattr(request.user, "role", None) != "ADMIN":
+        messages.error(request, "Vous ne pouvez enregistrer un plan que pour vos propres cours.")
+        return redirect("course_detail", pk=course.pk)
+
+    pending = request.session.get("pending_outline")
+    if not pending:
+        messages.error(request, "Aucun plan proposé n’a été trouvé à enregistrer.")
+        return redirect("course_edit", pk=course.pk)
+
+    try:
+        outline = json.loads(pending)
+    except json.JSONDecodeError:
+        messages.error(request, "Le plan proposé est invalide.")
+        return redirect("course_edit", pk=course.pk)
+
+    selected = []
+    for key, value in request.POST.items():
+        if key.startswith("lesson_") and key.endswith("_selected") and value == "on":
+            lesson_index = int(key.split("_")[1])
+            selected.append(lesson_index)
+
+    if not selected:
+        messages.error(request, "Aucune leçon validée n’a été sélectionnée pour l’enregistrement.")
+        return redirect("course_edit", pk=course.pk)
+
+    if len(selected) > 10:
+        messages.error(request, "Le plan ne peut contenir plus de 10 leçons.")
+        return redirect("course_edit", pk=course.pk)
+
+    next_order = (course.lessons.aggregate(max_order=Count("order"))['max_order'] or 0) + 1
+    created_lessons = []
+    with transaction.atomic():
+        for index in sorted(selected):
+            item = outline[index] if index < len(outline) else None
+            if not item:
+                continue
+            title = str(request.POST.get(f"lesson_{index}_title", item.get("title", ""))).strip()
+            description = str(request.POST.get(f"lesson_{index}_description", item.get("description", ""))).strip()
+            duration = int(request.POST.get(f"lesson_{index}_duration", item.get("duration_seconds", 0)))
+            if not title:
+                raise ValueError("Un titre de leçon ne peut pas être vide.")
+            if duration <= 0:
+                raise ValueError("La durée d’une leçon doit être positive.")
+            lesson = Lesson.objects.create(
+                course=course,
+                title=title,
+                description=description,
+                order=next_order,
+                duration_seconds=duration,
+            )
+            created_lessons.append(lesson)
+            next_order += 2
+
+    request.session.pop("pending_outline", None)
+    request.session.pop("pending_outline_course_id", None)
+    messages.success(request, f"✅ {len(created_lessons)} leçon(s) enregistrée(s) dans le cours.")
+    return redirect("course_detail", pk=course.pk)
 
 
 # ==============================================================================
@@ -128,7 +217,6 @@ def course_update_view(request, pk):
     denied = _require_role(request, "CREATOR", "ADMIN")
     if denied:
         return denied
-    # Un créateur ne peut modifier que ses propres cours
     if course.creator != request.user and not request.user.is_superuser:
         messages.error(request, "Vous ne pouvez modifier que vos propres cours.")
         return redirect("course_detail", pk=pk)

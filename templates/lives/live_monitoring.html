@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoring — LearnIt{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">Monitoring des apprenants</h1>
+
+    {% if rows %}
+        <div style="display: grid; gap: 1rem;">
+            {% for row in rows %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.2rem; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <strong>{{ row.user.username }}</strong>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">{{ row.user.email }}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <span class="badge {% if row.risk %}badge-danger{% else %}badge-published{% endif %}">{{ row.risk_level }}</span>
+                        <span style="font-weight: 700;">Taux : {{ row.global_rate|floatformat:2 }}</span>
+                        <span style="color: var(--text-muted);">Tendance : {{ row.trend }}</span>
+                        <span style="color: var(--text-muted);">Lives terminés : {{ row.inscriptions }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 2rem; text-align: center;">
+            <p style="color: var(--text-muted); margin: 0;">Aucun apprenant n’a participé à un live terminé.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

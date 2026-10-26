@@ -23,7 +23,7 @@
             {% endfor %}
         {% endif %}
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
-            <a href="{% url 'live_attendance_list' live.pk %}" class="btn btn-secondary">Retour</a>
+            <a href="{% url 'live_attendance' live.pk %}" class="btn btn-secondary">Retour</a>
             <button type="submit" class="btn btn-primary">Enregistrer</button>
         </div>
     </form>

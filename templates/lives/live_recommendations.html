@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Recommandations — LearnIt{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">Recommandations de lives</h1>
+
+    {% if recommendations %}
+        <div style="display: grid; gap: 1rem;">
+            {% for item in recommendations %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.2rem; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <strong>{{ item.live.title }}</strong>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">{{ item.live.start_at|date:"d/m/Y H:i" }} • {{ item.live.creator.username }}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <span class="badge badge-published">Score {{ item.score }}</span>
+                        <a href="{% url 'live_detail' item.live.pk %}" class="btn btn-secondary btn-sm">Voir</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 2rem; text-align: center;">
+            <p style="color: var(--text-muted); margin: 0;">Aucune recommandation pour le moment.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

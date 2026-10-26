@@ -39,6 +39,7 @@ class LiveSession(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    summary = models.TextField(blank=True, default="", verbose_name="Résumé IA")
 
     class Meta:
         ordering = ["start_at"]
@@ -109,31 +110,24 @@ class LiveAttendance(models.Model):
         on_delete=models.CASCADE,
         related_name="attendances",
     )
-    joined_at = models.DateTimeField(verbose_name="Début de présence")
-    left_at = models.DateTimeField(null=True, blank=True, verbose_name="Fin de présence")
-    duration_seconds = models.PositiveIntegerField(default=0, verbose_name="Durée (secondes)")
+    is_present = models.BooleanField(default=False, verbose_name="Présent")
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attendance_recorded",
+        verbose_name="Enregistré par",
+    )
+    recorded_at = models.DateTimeField(auto_now=True, verbose_name="Date d'enregistrement")
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "live_session", "joined_at"],
-                name="unique_live_attendance_joined_at",
+                fields=["user", "live_session"],
+                name="unique_live_attendance",
             )
         ]
 
     def __str__(self):
-        return f"{self.user} - {self.live_session.title}"
-
-    def clean(self):
-        super().clean()
-        if self.left_at and self.left_at <= self.joined_at:
-            raise ValidationError({"left_at": "La fin de présence doit être strictement après le début."})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        if self.left_at:
-            delta = self.left_at - self.joined_at
-            self.duration_seconds = max(int(delta.total_seconds()), 0)
-        else:
-            self.duration_seconds = 0
-        super().save(*args, **kwargs)
+        return f"{self.user} - {self.live_session.title} ({'Présent' if self.is_present else 'Absent'})"

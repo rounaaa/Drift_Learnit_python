@@ -19,6 +19,6 @@ class LiveRegistrationAdmin(admin.ModelAdmin):
 
 @admin.register(LiveAttendance)
 class LiveAttendanceAdmin(admin.ModelAdmin):
-    list_display = ["user", "live_session", "joined_at", "left_at", "duration_seconds"]
-    list_filter = ["live_session__status"]
+    list_display = ["user", "live_session", "is_present", "recorded_by", "recorded_at"]
+    list_filter = ["live_session__status", "is_present"]
     search_fields = ["user__username", "live_session__title"]

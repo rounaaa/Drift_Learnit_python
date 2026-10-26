@@ -1,15 +1,17 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError, models
-from django.db.models import Count, Q, Sum
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from courses.models import Course, Enrollment
 from users.models import User
 
-from .forms import LiveAttendanceForm, LiveRegistrationForm, LiveSessionForm, LiveSessionStatusForm
+from .ai import generate_live_summary
+from .analytics import compute_attendance_rates_for_user, get_live_monitoring_rows
+from .forms import AttendanceEntryForm, LiveAttendanceForm, LiveRegistrationForm, LiveSessionForm, LiveSessionStatusForm
 from .models import LiveAttendance, LiveRegistration, LiveSession
+from .recommendations import get_recommended_lives_for_user
 
 
 def _user_is_admin(user):
@@ -22,8 +24,6 @@ def _has_live_access(user, live_session):
     if user == live_session.creator:
         return True
     if user.is_authenticated and getattr(user, "role", None) == User.Role.LEARNER:
-        # A learner must be able to open the live detail page to see the metadata and
-        # decide whether to register. The actual meeting URL remains hidden until registration.
         return live_session.status in {LiveSession.Status.SCHEDULED, LiveSession.Status.LIVE}
     return False
 
@@ -46,11 +46,7 @@ def live_list_view(request):
     return render(
         request,
         "lives/live_list.html",
-        {
-            "lives": queryset,
-            "filter_status": filter_status,
-            "live_status_choices": LiveSession.Status.choices,
-        },
+        {"lives": queryset, "filter_status": filter_status, "live_status_choices": LiveSession.Status.choices},
     )
 
 
@@ -61,23 +57,24 @@ def live_detail_view(request, pk):
         pk=pk,
     )
 
-    if not _has_live_access(request.user, live) and not (request.user == live.creator or _user_is_admin(request.user)):
+    if not _has_live_access(request.user, live):
         messages.error(request, "Vous n'avez pas accès à ce live.")
         return redirect("live_list")
 
     registrations = live.registrations.select_related("user").order_by("user__username")
-    attendance_summary = []
-    total_attendance = 0
-    for registration in registrations:
-        total_user_attendance = live.attendances.filter(user=registration.user).aggregate(total=models.Sum("duration_seconds"))['total'] or 0
-        attendance_summary.append({"registration": registration, "total_duration": total_user_attendance})
-        total_attendance += total_user_attendance
-
     can_view_meeting_url = _user_is_admin(request.user) or request.user == live.creator or LiveRegistration.objects.filter(
-        user=request.user,
-        live_session=live,
-        status=LiveRegistration.Status.REGISTERED,
+        user=request.user, live_session=live, status=LiveRegistration.Status.REGISTERED
     ).exists()
+    is_creator = request.user == live.creator or _user_is_admin(request.user)
+
+    if live.status == LiveSession.Status.COMPLETED and is_creator:
+        registered = live.registrations.filter(status=LiveRegistration.Status.REGISTERED).count()
+        present = live.attendances.filter(is_present=True).count()
+        summary = live.summary or generate_live_summary(live)
+    else:
+        registered = live.registrations.filter(status=LiveRegistration.Status.REGISTERED).count()
+        present = live.attendances.filter(is_present=True).count()
+        summary = live.summary
 
     return render(
         request,
@@ -85,10 +82,11 @@ def live_detail_view(request, pk):
         {
             "live": live,
             "registrations": registrations,
-            "attendance_summary": attendance_summary,
-            "total_attendance": total_attendance,
             "can_view_meeting_url": can_view_meeting_url,
-            "is_creator": request.user == live.creator or _user_is_admin(request.user),
+            "is_creator": is_creator,
+            "registered_count": registered,
+            "present_count": present,
+            "summary": summary,
         },
     )
 
@@ -114,7 +112,7 @@ def live_create_view(request):
 
 
 @login_required
-def live_update_view(request, pk):
+def live_edit_view(request, pk):
     live = get_object_or_404(LiveSession.objects.select_related("creator", "course"), pk=pk)
     if live.creator != request.user and not _user_is_admin(request.user):
         messages.error(request, "Vous n'êtes pas le propriétaire du live.")
@@ -205,44 +203,56 @@ def live_unregister_view(request, pk):
 
 
 @login_required
-def live_attendance_list_view(request, pk):
+def live_attendance_view(request, pk):
     live = get_object_or_404(LiveSession.objects.select_related("creator"), pk=pk)
     if live.creator != request.user and not _user_is_admin(request.user):
-        messages.error(request, "Vous ne pouvez pas consulter cette liste.")
+        messages.error(request, "Vous n'êtes pas autorisé à gérer les présences.")
         return redirect("live_detail", pk=live.pk)
 
-    registrations = LiveRegistration.objects.filter(live_session=live).select_related("user")
-    attendance_rows = []
-    for registration in registrations:
-        total_duration = LiveAttendance.objects.filter(user=registration.user, live_session=live).aggregate(total=models.Sum("duration_seconds"))['total'] or 0
-        attendance_rows.append({
-            "registration": registration,
-            "total_duration": total_duration,
-            "attendances": LiveAttendance.objects.filter(user=registration.user, live_session=live).order_by("joined_at"),
-        })
-
-    return render(request, "lives/live_attendance_list.html", {"live": live, "attendance_rows": attendance_rows})
-
-
-@login_required
-def live_attendance_create_view(request, pk):
-    live = get_object_or_404(LiveSession.objects.select_related("creator"), pk=pk)
-    if live.creator != request.user and not _user_is_admin(request.user):
-        messages.error(request, "Vous n'êtes pas autorisé à enregistrer une présence.")
+    if live.status not in {LiveSession.Status.LIVE, LiveSession.Status.COMPLETED}:
+        messages.error(request, "La présence peut être enregistrée seulement pour un live en direct ou terminé.")
         return redirect("live_detail", pk=live.pk)
+
+    registrations = LiveRegistration.objects.filter(live_session=live, status=LiveRegistration.Status.REGISTERED).select_related("user")
+    submitted_user_ids = [int(item["user_id"]) for item in request.POST.getlist("user_id")]
 
     if request.method == "POST":
-        form = LiveAttendanceForm(request.POST, live_session=live)
-        if form.is_valid():
-            attendance = form.save(commit=False)
-            attendance.live_session = live
-            attendance.save()
-            messages.success(request, "Période de présence enregistrée.")
-            return redirect("live_attendance_list", pk=live.pk)
-    else:
-        form = LiveAttendanceForm(live_session=live)
+        valid_ids = set(registrations.values_list("user_id", flat=True))
+        user_entries = []
+        for registration in registrations:
+            posted_value = request.POST.get(f"present_{registration.user_id}", "0")
+            is_present = posted_value == "1"
+            if registration.user_id not in valid_ids:
+                continue
+            user_entries.append((registration.user_id, is_present))
 
-    return render(request, "lives/live_attendance_form.html", {"form": form, "live": live})
+        for user_id, is_present in user_entries:
+            attendance, created = LiveAttendance.objects.get_or_create(
+                user_id=user_id,
+                live_session=live,
+                defaults={"is_present": is_present, "recorded_by": request.user},
+            )
+            if not created:
+                attendance.is_present = is_present
+                attendance.recorded_by = request.user
+                attendance.recorded_at = timezone.now()
+                attendance.save(update_fields=["is_present", "recorded_by", "recorded_at"])
+
+        messages.success(request, "La présence a été enregistrée.")
+        return redirect("live_detail", pk=live.pk)
+
+    attendance_map = {attendance.user_id: attendance for attendance in LiveAttendance.objects.filter(live_session=live).select_related("user")}
+    rows = []
+    for registration in registrations:
+        attendance = attendance_map.get(registration.user_id)
+        rows.append({
+            "registration": registration,
+            "attendance": attendance,
+            "is_present": attendance.is_present if attendance else False,
+            "rate": compute_attendance_rates_for_user(registration.user, creator=live.creator).get("global_rate", 0.0),
+        })
+
+    return render(request, "lives/live_attendance.html", {"live": live, "rows": rows})
 
 
 @login_required
@@ -267,3 +277,44 @@ def live_status_update_view(request, pk):
         form = LiveSessionStatusForm(instance=live)
 
     return render(request, "lives/live_status_form.html", {"form": form, "live": live})
+
+
+@login_required
+def live_monitoring_view(request):
+    if not _user_is_admin(request.user) and getattr(request.user, "role", None) != User.Role.CREATOR:
+        messages.error(request, "Vous n'avez pas accès au monitoring.")
+        return redirect("live_list")
+
+    if _user_is_admin(request.user):
+        rows = get_live_monitoring_rows(request.user)
+    else:
+        rows = get_live_monitoring_rows(request.user)
+
+    return render(request, "lives/live_monitoring.html", {"rows": rows})
+
+
+@login_required
+def live_recommendations_view(request):
+    if getattr(request.user, "role", None) != User.Role.LEARNER and not request.user.is_superuser:
+        messages.error(request, "Cette page est réservée aux apprenants.")
+        return redirect("live_list")
+
+    recommendations = get_recommended_lives_for_user(request.user)
+    return render(request, "lives/live_recommendations.html", {"recommendations": recommendations})
+
+
+@login_required
+def live_generate_summary_view(request, pk):
+    live = get_object_or_404(LiveSession.objects.select_related("creator"), pk=pk)
+    if live.creator != request.user and not _user_is_admin(request.user):
+        messages.error(request, "Vous n'êtes pas autorisé à générer le résumé.")
+        return redirect("live_detail", pk=live.pk)
+    if live.status != LiveSession.Status.COMPLETED:
+        messages.error(request, "Le résumé n'est disponible que pour un live terminé.")
+        return redirect("live_detail", pk=live.pk)
+
+    summary = generate_live_summary(live)
+    live.summary = summary
+    live.save(update_fields=["summary"])
+    messages.success(request, "Le résumé IA a été généré.")
+    return redirect("live_detail", pk=live.pk)

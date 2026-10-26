@@ -310,18 +310,21 @@
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
                         <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
                         <li><a href="{% url 'live_list' %}" class="nav-link">🎥 Lives</a></li>
+                        <li><a href="{% url 'live_recommendations' %}" class="nav-link">✨ Recommandations</a></li>
                     {% elif user.role == "CREATOR" %}
                         <!-- PAGES DU FORMATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes formations</a></li>
                         <li><a href="{% url 'course_create' %}" class="nav-link">+ Créer un cours</a></li>
                         <li><a href="{% url 'live_list' %}" class="nav-link">🎥 Lives</a></li>
                         <li><a href="{% url 'live_create' %}" class="nav-link">+ Créer un live</a></li>
+                        <li><a href="{% url 'live_monitoring' %}" class="nav-link">📊 Monitoring</a></li>
                     {% else %}
                         <!-- PAGES DE L'ADMINISTRATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
                         <li><a href="{% url 'course_create' %}" class="nav-link">+ Créer un cours</a></li>
                         <li><a href="{% url 'live_list' %}" class="nav-link">🎥 Lives</a></li>
                         <li><a href="{% url 'live_create' %}" class="nav-link">+ Créer un live</a></li>
+                        <li><a href="{% url 'live_monitoring' %}" class="nav-link">📊 Monitoring</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                         <li><a href="/admin/" class="nav-link" style="color: #6366f1; font-weight: 700;">🛡️ Admin Django</a></li>
                     {% endif %}

@@ -18,6 +18,9 @@
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <a href="{% url 'live_edit' live.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
                     <a href="{% url 'live_cancel' live.pk %}" class="btn btn-danger btn-sm">Annuler</a>
+                    {% if live.status == 'COMPLETED' %}
+                        <a href="{% url 'live_generate_summary' live.pk %}" class="btn btn-primary btn-sm">Générer le résumé</a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
@@ -81,7 +84,7 @@
         <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
                 <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0;">Participants</h2>
-                <a href="{% url 'live_attendance_list' live.pk %}" class="btn btn-secondary btn-sm">Voir les présences</a>
+                <a href="{% url 'live_attendance' live.pk %}" class="btn btn-secondary btn-sm">Voir les présences</a>
             </div>
             {% if registrations %}
                 <div style="display: grid; gap: 0.75rem;">
@@ -101,6 +104,19 @@
             {% else %}
                 <p style="color: var(--text-muted); margin: 0;">Aucun participant inscrit pour l’instant.</p>
             {% endif %}
+        </div>
+    {% endif %}
+
+    {% if is_creator and live.status == 'COMPLETED' %}
+        <div style="margin: 1rem 0; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+            <strong>Résumé IA</strong>
+            <p style="margin-top: 0.5rem; white-space: pre-line; color: #334155;">{% if summary %}{{ summary }}{% else %}Aucun résumé généré.{% endif %}</p>
+        </div>
+    {% endif %}
+
+    {% if is_creator %}
+        <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'live_attendance' live.pk %}" class="btn btn-primary btn-sm">Présences</a>
         </div>
     {% endif %}
 </div>

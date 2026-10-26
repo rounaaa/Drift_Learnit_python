@@ -1,6 +1,5 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 from .models import LiveAttendance, LiveRegistration, LiveSession
 
@@ -47,64 +46,43 @@ class LiveSessionStatusForm(forms.ModelForm):
     class Meta:
         model = LiveSession
         fields = ["status"]
-        widgets = {
-            "status": forms.Select(attrs={"class": "form-select"}),
-        }
+        widgets = {"status": forms.Select(attrs={"class": "form-select"})}
 
 
 class LiveRegistrationForm(forms.ModelForm):
     class Meta:
         model = LiveRegistration
         fields = ["status"]
-        widgets = {
-            "status": forms.Select(attrs={"class": "form-select"}),
-        }
+        widgets = {"status": forms.Select(attrs={"class": "form-select"})}
+
+
+class AttendanceEntryForm(forms.Form):
+    user_id = forms.IntegerField(widget=forms.HiddenInput())
+    is_present = forms.TypedChoiceField(
+        choices=(("1", "Présent"), ("0", "Absent")),
+        coerce=lambda value: value == "1",
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Présence",
+    )
 
 
 class LiveAttendanceForm(forms.ModelForm):
     class Meta:
         model = LiveAttendance
-        fields = ["user", "joined_at", "left_at"]
+        fields = ["user", "is_present"]
         widgets = {
             "user": forms.Select(attrs={"class": "form-select"}),
-            "joined_at": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
-            "left_at": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
+            "is_present": forms.Select(attrs={"class": "form-select"}, choices=((True, "Présent"), (False, "Absent"))),
         }
 
     def __init__(self, *args, live_session=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.live_session = live_session
-
         if live_session is not None:
             registrations = live_session.registrations.filter(status=LiveRegistration.Status.REGISTERED).select_related("user")
-            self.fields["user"].queryset = [item.user for item in registrations]
+            self.fields["user"].queryset = [registration.user for registration in registrations]
             self.fields["user"].empty_label = "— Choisir un participant —"
 
     def clean(self):
         cleaned_data = super().clean()
-        joined_at = cleaned_data.get("joined_at")
-        left_at = cleaned_data.get("left_at")
-        user = cleaned_data.get("user")
-
-        if joined_at and left_at and left_at <= joined_at:
-            raise ValidationError("La fin de présence doit être strictement après le début.")
-
-        if self.live_session and user and joined_at:
-            existing = LiveAttendance.objects.filter(live_session=self.live_session, user=user)
-            if self.instance and self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-
-            for attendance in existing.select_related("user"):
-                existing_end = attendance.left_at or attendance.joined_at
-                if attendance.left_at:
-                    if joined_at < attendance.left_at and (left_at or joined_at) > attendance.joined_at:
-                        raise ValidationError(
-                            f"Chevauchement détecté pour {user.username} : une présence existe déjà entre "
-                            f"{attendance.joined_at} et {attendance.left_at}."
-                        )
-                elif left_at is None or joined_at < left_at:
-                    raise ValidationError(
-                        f"Chevauchement détecté pour {user.username} : une présence ouverte existe déjà."
-                    )
-
         return cleaned_data
