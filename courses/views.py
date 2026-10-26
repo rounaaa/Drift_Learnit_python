@@ -36,7 +36,8 @@ def course_outline_generate_view(request, pk):
         messages.error(request, "Cette action attend une requête POST.")
         return redirect("course_edit", pk=course.pk)
 
-    outline = generate_course_outline(course.title, course.description, course.level)
+    pdf_path = course.course_file.path if course.course_file else None
+    outline = generate_course_outline(course.title, course.description, course.level, pdf_path=pdf_path)
     request.session["pending_outline"] = json.dumps(outline)
     request.session["pending_outline_course_id"] = course.pk
     return render(request, "courses/course_form.html", {
@@ -103,7 +104,7 @@ def course_outline_save_view(request, pk):
                 duration_seconds=duration,
             )
             created_lessons.append(lesson)
-            next_order += 2
+            next_order += 1
 
     request.session.pop("pending_outline", None)
     request.session.pop("pending_outline_course_id", None)
