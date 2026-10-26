@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ video.title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div>
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% if user.role == 'CREATOR' %}{% url 'videos:my_videos' %}{% else %}{% url 'videos:video_list' %}{% endif %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">&larr; Retour aux vidéos</a>
+    </div>
+    <article class="form-card">
+        {% if video.thumbnail_url %}
+            <img src="{{ video.thumbnail_url }}" alt="Miniature de {{ video.title }}" style="width: 100%; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        {% endif %}
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <a class="badge badge-published" style="text-decoration: none;" href="{% url 'videos:category_detail' video.category.pk %}">{{ video.category.name }}</a>
+            <span class="badge badge-{{ video.status|lower }}">{{ video.get_status_display }}</span>
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem;">{{ video.title }}</h1>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            Par {{ video.creator.username }} · {{ video.duration_seconds }} secondes ·
+            {% if video.published_at %}Publié le {{ video.published_at|date:"d M Y" }}{% else %}Créé le {{ video.created_at|date:"d M Y" }}{% endif %}
+        </p>
+        <div style="white-space: pre-line; margin-bottom: 1.5rem;">{{ video.description }}</div>
+        <video controls preload="metadata" style="width: 100%; max-height: 520px; border-radius: var(--radius-md); background: #0f172a; margin-bottom: 1rem;">
+            <source src="{{ video.video_file.url }}">
+            Votre navigateur ne prend pas en charge la lecture vidéo.
+        </video>
+        {% if user == video.creator %}
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem;">
+                <a href="{% url 'videos:video_edit' video.pk %}" class="btn btn-secondary">Modifier</a>
+                <a href="{% url 'videos:video_delete' video.pk %}" class="btn btn-secondary" style="color: var(--danger);">Supprimer</a>
+                {% if video.status == "DRAFT" or video.status == "PUBLISHED" %}
+                    <form method="post" action="{% url 'videos:video_toggle_status' video.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">
+                            {% if video.status == "DRAFT" %}Publier{% else %}Repasser en brouillon{% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
+    </article>
+</div>
+{% endblock %}

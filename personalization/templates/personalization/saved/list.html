@@ -1,0 +1,57 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Mes recherches sauvegardées{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Mes recherches</h1>
+    <p class="ps-pagehead__lead">Relancez une recherche en un clic. Quand l'alerte est active, les contenus publiés depuis votre dernière visite sont comptés ici et dans le menu.</p>
+  </div>
+  {% if rows|length < max %}
+    <a class="btn btn-secondary" href="{% url 'personalization:saved-create' %}">Nouvelle recherche sauvegardée</a>
+  {% endif %}
+</header>
+
+{% if rows %}
+  <ul class="ps-cards">
+    {% for row in rows %}
+      {% with saved=row.saved %}
+      <li class="ps-savedcard {% if row.new_count %}ps-savedcard--new{% endif %}">
+        <div class="ps-savedcard__main">
+          <h2 class="ps-savedcard__name">
+            <a href="{% url 'personalization:saved-open' saved.pk %}">{{ saved.name }}</a>
+          </h2>
+          <p class="ps-savedcard__desc">{{ saved.describe }}</p>
+          <p class="ps-savedcard__meta">
+            {% if row.new_count %}
+              <strong class="ps-savedcard__new">{{ row.new_count }} nouveau{{ row.new_count|pluralize:"x" }} contenu{{ row.new_count|pluralize }}</strong>
+            {% endif %}
+            <span>{{ row.total }} résultat{{ row.total|pluralize }} au total</span>
+            <span>Consultée le {{ saved.last_viewed_at|date:"j F Y" }}</span>
+          </p>
+        </div>
+        <div class="ps-savedcard__actions">
+          <a class="btn btn-primary btn-sm" href="{% url 'personalization:saved-open' saved.pk %}">Voir les résultats</a>
+          <form method="post" action="{% url 'personalization:saved-toggle-notify' saved.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="ps-switch ps-switch--button" aria-pressed="{{ saved.notify|yesno:'true,false' }}">
+              <span class="ps-switch__track" aria-hidden="true"></span>
+              <span>Alerte {{ saved.notify|yesno:"active,coupée" }}</span>
+            </button>
+          </form>
+          <a class="ps-linkbtn" href="{% url 'personalization:saved-edit' saved.pk %}">Modifier</a>
+          <a class="ps-linkbtn ps-linkbtn--danger" href="{% url 'personalization:saved-delete' saved.pk %}">Supprimer</a>
+        </div>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+  <p class="ps-footnote">{{ rows|length }} recherche{{ rows|length|pluralize }} sur {{ max }} possibles.</p>
+{% else %}
+  <div class="ps-empty">
+    <p class="ps-empty__title">Aucune recherche sauvegardée.</p>
+    <p>Lancez une <a href="{% url 'personalization:search' %}">recherche</a>, puis cliquez sur « Sauvegarder cette recherche » au-dessus des résultats.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -11,6 +11,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('videos/', include('videos.urls')),
+    path('recherche/', include('personalization.urls')),
     path('', include('courses.urls')),
     path('', include('users.urls')),
     path('', include('agent.urls')),

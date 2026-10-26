@@ -1,0 +1,100 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Synonymes de recherche{% endblock %}
+
+{% block module_content %}
+{% include "personalization/manage/_nav.html" %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Synonymes de recherche</h1>
+    <p class="ps-pagehead__lead">Quand un apprenant tape un terme, la recherche cherche aussi ses synonymes. Exemple : « ml » trouve les contenus sur le « machine learning ».</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'personalization:synonym-create' %}">Ajouter un synonyme</a>
+</header>
+
+<section class="ps-tester">
+  <form method="get" class="ps-tester__form">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    <label class="ps-field ps-field--inline">
+      <span>Tester une recherche</span>
+      <input type="search" name="tester" value="{{ test.query|default:'' }}" placeholder="ml">
+    </label>
+    <button type="submit" class="btn btn-secondary btn-sm">Tester</button>
+  </form>
+  {% if test %}
+    <div class="ps-tester__result">
+      <p>
+        « {{ test.query }} » est cherché comme :
+        {% for group in test.groups %}
+          <span class="ps-tester__group">{% for term in group %}<mark>{{ term }}</mark>{% if not forloop.last %} ou {% endif %}{% endfor %}</span>{% if not forloop.last %} <strong>et</strong> {% endif %}
+        {% endfor %}
+      </p>
+      <p class="ps-footnote">
+        {{ test.with_synonyms }} résultat{{ test.with_synonyms|pluralize }} avec les synonymes,
+        {{ test.without }} sans.
+        <a href="{% url 'personalization:search' %}?q={{ test.query|urlencode }}">Voir la recherche</a>
+      </p>
+    </div>
+  {% endif %}
+</section>
+
+<form method="get" class="ps-filterbar">
+  <label class="ps-visually-hidden" for="syn-q">Filtrer les synonymes</label>
+  <input id="syn-q" type="search" name="q" value="{{ q }}" placeholder="Filtrer par terme ou synonyme">
+  <button type="submit" class="btn btn-secondary btn-sm">Filtrer</button>
+  {% if q %}<a class="ps-linkbtn" href="{% url 'personalization:synonym-list' %}">Tout afficher</a>{% endif %}
+</form>
+
+{% if page.object_list %}
+  <table class="ps-table ps-table--full">
+    <thead>
+      <tr>
+        <th scope="col">Terme</th>
+        <th scope="col">Synonymes</th>
+        <th scope="col">Sens</th>
+        <th scope="col">État</th>
+        <th scope="col"><span class="ps-visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for synonym in page.object_list %}
+        <tr class="{% if not synonym.is_active %}ps-is-off{% endif %}">
+          <td><strong>{{ synonym.term }}</strong></td>
+          <td>{{ synonym.synonyms }}</td>
+          <td>{{ synonym.bidirectional|yesno:"Dans les deux sens,Terme vers synonymes" }}</td>
+          <td>
+            <form method="post" action="{% url 'personalization:synonym-toggle' synonym.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="ps-switch ps-switch--button" aria-pressed="{{ synonym.is_active|yesno:'true,false' }}">
+                <span class="ps-switch__track" aria-hidden="true"></span>
+                <span>{{ synonym.is_active|yesno:"Actif,Inactif" }}</span>
+              </button>
+            </form>
+          </td>
+          <td class="ps-action">
+            <a href="{% url 'personalization:synonym-edit' synonym.pk %}">Modifier</a>
+            <a class="ps-linkbtn--danger" href="{% url 'personalization:synonym-delete' synonym.pk %}">Supprimer</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page.paginator.num_pages > 1 %}
+    <nav class="ps-pager" aria-label="Pages">
+      {% if page.has_previous %}<a class="btn btn-secondary" href="{% querystring page=page.previous_page_number %}">Page précédente</a>{% else %}<span></span>{% endif %}
+      <span class="ps-pager__status">Page {{ page.number }} sur {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="btn btn-secondary" href="{% querystring page=page.next_page_number %}">Page suivante</a>{% else %}<span></span>{% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <div class="ps-empty">
+    {% if q %}
+      <p class="ps-empty__title">Aucun synonyme ne contient « {{ q }} ».</p>
+    {% else %}
+      <p class="ps-empty__title">Aucun synonyme pour le moment.</p>
+      <p>Commencez par les <a href="{% url 'personalization:stats' %}">recherches sans résultat</a> : ce sont celles qui en ont le plus besoin.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
