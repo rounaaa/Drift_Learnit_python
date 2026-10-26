@@ -1,0 +1,65 @@
+.moderation-panel {
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #64748b;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+}
+
+.moderation-panel h2 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.moderation-panel p {
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.moderation-result {
+    margin-top: 0.5rem;
+    color: #0f172a;
+}
+
+.moderation-result:focus-visible,
+.form-card input:focus-visible,
+.form-card textarea:focus-visible,
+.form-card select:focus-visible,
+.form-card button:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 3px;
+}
+
+.moderation-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.4rem;
+    border: 3px solid #475569;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.15rem;
+    animation: moderation-spin 0.8s linear infinite;
+}
+
+.moderation-badge-pending {
+    background: #fef3c7;
+    color: #713f12;
+}
+
+.moderation-badge-rejected {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+@keyframes moderation-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .moderation-spinner {
+        animation: none;
+    }
+}

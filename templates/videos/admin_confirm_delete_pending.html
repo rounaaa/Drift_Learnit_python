@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmer la suppression — LearnIt{% endblock %}
+
+{% block content %}
+<section class="form-card" aria-labelledby="delete-pending-title">
+    <h1 id="delete-pending-title">Confirmer la suppression définitive</h1>
+    <p>
+        La vidéo, son fichier téléversé et ses signalements seront supprimés
+        définitivement. Cette action est irréversible.
+    </p>
+    <ul>
+        {% for video in videos %}
+            <li>{{ video.title }} — {{ video.creator.username }}</li>
+        {% endfor %}
+    </ul>
+    <form method="post" action="{% url 'videos:admin_delete_pending' %}">
+        {% csrf_token %}
+        {% for video_id in video_ids %}
+            <input type="hidden" name="video_ids" value="{{ video_id }}">
+        {% endfor %}
+        <input type="hidden" name="confirm" value="yes">
+        <button type="submit" class="btn btn-primary">Confirmer la suppression définitive</button>
+        <a href="{% url 'videos:video_list' %}" class="btn btn-secondary">Annuler</a>
+    </form>
+</section>
+{% endblock %}

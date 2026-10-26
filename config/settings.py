@@ -139,6 +139,37 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Video AI processing limits can be adjusted per deployment.
+VIDEO_SUMMARY_MAX_FILE_SIZE = int(os.getenv("VIDEO_SUMMARY_MAX_FILE_SIZE", 50 * 1024 * 1024))
+VIDEO_SUMMARY_MAX_DURATION_SECONDS = int(
+    os.getenv("VIDEO_SUMMARY_MAX_DURATION_SECONDS", 10 * 60)
+)
+
+# Eager mode keeps local development and demos usable without Redis.
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "True").lower() in {
+    "1", "true", "yes"
+}
+CELERY_TASK_EAGER_PROPAGATES = True
+VIDEO_AI_CACHE_URL = os.getenv("VIDEO_AI_CACHE_URL", "")
+if not VIDEO_AI_CACHE_URL and not CELERY_TASK_ALWAYS_EAGER:
+    if CELERY_BROKER_URL.startswith(("redis://", "rediss://")):
+        VIDEO_AI_CACHE_URL = CELERY_BROKER_URL
+CACHES = {
+    "default": (
+        {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": VIDEO_AI_CACHE_URL,
+            "KEY_PREFIX": "learnit",
+        }
+        if VIDEO_AI_CACHE_URL
+        else {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "learnit-video-ai",
+        }
+    )
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

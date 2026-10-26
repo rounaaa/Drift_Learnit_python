@@ -14,6 +14,13 @@
         <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
             <a class="badge badge-published" style="text-decoration: none;" href="{% url 'videos:category_detail' video.category.pk %}">{{ video.category.name }}</a>
             <span class="badge badge-{{ video.status|lower }}">{{ video.get_status_display }}</span>
+            {% for flag in video.moderation_flags.all %}
+                {% if flag.status == "PENDING" %}
+                    <span class="badge moderation-badge-pending">En vérification</span>
+                {% elif flag.status == "REJECTED" %}
+                    <span class="badge moderation-badge-rejected">Rejetée</span>
+                {% endif %}
+            {% endfor %}
         </div>
         <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem;">{{ video.title }}</h1>
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
@@ -21,10 +28,348 @@
             {% if video.published_at %}Publié le {{ video.published_at|date:"d M Y" }}{% else %}Créé le {{ video.created_at|date:"d M Y" }}{% endif %}
         </p>
         <div style="white-space: pre-line; margin-bottom: 1.5rem;">{{ video.description }}</div>
-        <video controls preload="metadata" style="width: 100%; max-height: 520px; border-radius: var(--radius-md); background: #0f172a; margin-bottom: 1rem;">
-            <source src="{{ video.video_file.url }}">
-            Votre navigateur ne prend pas en charge la lecture vidéo.
-        </video>
+        {% if video.video_file %}
+            <video id="video-player" controls preload="metadata" style="width: 100%; max-height: 520px; border-radius: var(--radius-md); background: #0f172a; margin-bottom: 1rem;">
+                <source src="{{ video.video_file.url }}">
+                {% for item in available_summaries %}
+                    <track kind="subtitles" srclang="{{ item.language }}" lang="{{ item.language }}" label="{{ item.get_language_display|default:item.language }}" src="{% url 'videos:subtitles' video.pk item.language %}" {% if item.language|slice:":2" == "ar" %}dir="rtl"{% endif %} {% if item.is_source %}data-source="true"{% endif %}>
+                {% endfor %}
+                Votre navigateur ne prend pas en charge la lecture vidéo.
+            </video>
+        {% else %}
+            <p role="status">Les sous-titres ne peuvent pas être affichés : la vidéo ne possède pas de source lisible directement par le lecteur HTML5.</p>
+        {% endif %}
+        {% if user.role == "LEARNER" and video.status == "PUBLISHED" %}
+            <section id="video-ai-tools"
+                data-generate-url="{% url 'videos:ai_generate' video.pk %}"
+                data-status-url="{% url 'videos:ai_status' video.pk %}"
+                data-subtitles-url="{% url 'videos:subtitles' video.pk 'LANG' %}"
+                data-pdf-url="{% url 'videos:summary_pdf' video.pk %}"
+                data-can-manage="{{ can_manage_ai_content|yesno:'true,false' }}"
+                aria-labelledby="video-ai-heading"
+                class="video-ai-tools">
+                <div class="video-ai-tools__intro">
+                    <span aria-hidden="true" class="video-ai-tools__icon">✦</span>
+                    <div>
+                        <h2 id="video-ai-heading">Sous-titres et résumé</h2>
+                        <p>Choisissez une langue pour afficher les sous-titres ou télécharger le résumé.</p>
+                    </div>
+                </div>
+                {% if can_manage_ai_content %}
+                    {% for issue in failed_ai_summaries %}
+                        <p lang="{{ issue.language }}" {% if issue.language|slice:":2" == "ar" %}dir="rtl"{% endif %} role="status" aria-live="polite">{{ issue.get_language_display|default:issue.language }} — {{ issue.error_message }}</p>
+                    {% endfor %}
+                {% endif %}
+                {% if can_manage_ai_content %}
+                    <label for="ai-source-file">Source audio/vidéo (facultative, MP4/MP3/WAV/M4A, {{ source_file_max_mb }} Mo max., {{ source_max_duration_minutes }} min max.)</label>
+                    <input id="ai-source-file" type="file" accept=".mp4,.mp3,.wav,.m4a,audio/mpeg,audio/mp4,audio/wav,video/mp4,video/quicktime">
+                    <label style="display: block; margin: .75rem 0;">
+                        <input id="ai-force" type="checkbox">
+                        Relancer une génération existante
+                    </label>
+                {% endif %}
+                <div class="video-ai-tools__actions">
+                    {% if video.video_file %}
+                        <div class="video-ai-tools__choice">
+                            <label for="subtitle-language">Langue des sous-titres</label>
+                            <select id="subtitle-language" class="form-select">
+                                <option value="fr">Français</option>
+                                <option value="ar" lang="ar" dir="rtl">العربية</option>
+                                <option value="en">English</option>
+                                {% for item in available_summaries %}
+                                    {% if item.is_source and item.language != "fr" and item.language != "ar" and item.language != "en" %}
+                                        <option value="{{ item.language }}" lang="{{ item.language }}" {% if item.language|slice:":2" == "ar" %}dir="rtl"{% endif %}>{{ item.get_language_display|default:item.language }} (langue d'origine)</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            {% if can_manage_ai_content and video.status != "PUBLISHED" %}
+                                <button type="button" class="btn btn-primary video-ai-tools__button" data-ai-action="subtitles" data-prepare="true">Préparer avant publication</button>
+                            {% else %}
+                                <button type="button" class="btn btn-primary video-ai-tools__button" data-ai-action="subtitles"><span aria-hidden="true">CC</span> Sous-titres</button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p role="status">Les sous-titres ne peuvent pas être affichés dans le lecteur : la source vidéo n'est pas un fichier lisible directement.</p>
+                    {% endif %}
+                    <div class="video-ai-tools__choice">
+                        <label for="summary-language">Langue du résumé</label>
+                        <select id="summary-language" class="form-select">
+                            <option value="fr">Français</option>
+                            <option value="ar" lang="ar" dir="rtl">العربية</option>
+                            <option value="en">English</option>
+                        </select>
+                        <button type="button" class="btn btn-primary video-ai-tools__button" data-ai-action="summary"><span aria-hidden="true">↓</span> Résumé PDF</button>
+                    </div>
+                </div>
+                <p id="ai-progress" role="status" aria-live="polite" style="margin-top: .75rem;"></p>
+                <span id="ai-spinner" role="status" aria-label="Génération du contenu en cours" hidden>⏳ Génération en cours…</span>
+                <div id="ai-fallback" hidden></div>
+                <form hidden>{% csrf_token %}</form>
+                <noscript>Activez JavaScript pour demander la génération et suivre son avancement.</noscript>
+            </section>
+            <style>
+                .video-ai-tools {
+                    margin-top: 1.5rem;
+                    padding: 1.25rem;
+                    border: 1px solid #c7d2fe;
+                    border-radius: var(--radius-md);
+                    background: linear-gradient(145deg, #f8faff, #ffffff 70%);
+                    box-shadow: 0 8px 24px rgba(30, 41, 59, .07);
+                }
+                .video-ai-tools__intro {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: .85rem;
+                    margin-bottom: 1.25rem;
+                }
+                .video-ai-tools__icon {
+                    display: grid;
+                    flex: 0 0 2.5rem;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    place-items: center;
+                    border-radius: .8rem;
+                    background: #e0e7ff;
+                    color: #3730a3;
+                    font-size: 1.2rem;
+                }
+                .video-ai-tools__intro h2 {
+                    margin: 0;
+                    color: #172554;
+                    font-size: 1.15rem;
+                    font-weight: 750;
+                }
+                .video-ai-tools__intro p {
+                    margin: .25rem 0 0;
+                    color: #475569;
+                    font-size: .92rem;
+                }
+                .video-ai-tools__actions {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+                    gap: 1rem;
+                }
+                .video-ai-tools__choice {
+                    display: grid;
+                    align-content: start;
+                    gap: .55rem;
+                    padding: 1rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: .8rem;
+                    background: #fff;
+                }
+                .video-ai-tools__choice label {
+                    color: #1e293b;
+                    font-size: .9rem;
+                    font-weight: 650;
+                }
+                .video-ai-tools__choice .form-select {
+                    width: 100%;
+                    min-height: 2.75rem;
+                    border-color: #cbd5e1;
+                    border-radius: .6rem;
+                    background-color: #fff;
+                }
+                .video-ai-tools__button {
+                    width: 100%;
+                    min-height: 2.8rem;
+                    border-radius: .65rem;
+                    box-shadow: 0 3px 9px rgba(79, 70, 229, .18);
+                }
+                .video-ai-tools__button:hover {
+                    box-shadow: 0 5px 13px rgba(79, 70, 229, .25);
+                }
+                #video-ai-tools :focus-visible {
+                    outline: 3px solid #4338ca;
+                    outline-offset: 3px;
+                }
+                @media (max-width: 480px) {
+                    .video-ai-tools { padding: 1rem; }
+                    .video-ai-tools__choice { padding: .85rem; }
+                }
+            </style>
+            <script>
+                (() => {
+                    const tools = document.getElementById("video-ai-tools");
+                    const player = document.getElementById("video-player");
+                    if (!tools) return;
+                    const progress = document.getElementById("ai-progress");
+                    const spinner = document.getElementById("ai-spinner");
+                    const fallback = document.getElementById("ai-fallback");
+                    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value
+                        || "{{ csrf_token }}";
+                    const labels = {fr: "Français", ar: "العربية", en: "English"};
+                    let polling = false;
+
+                    function addSourceLanguage(language) {
+                        if (!language) return;
+                        const select = document.getElementById("subtitle-language");
+                        if (!select) return;
+                        if (![...select.options].some(option => option.value === language)) {
+                            const option = document.createElement("option");
+                            option.value = language;
+                            option.lang = language;
+                            option.textContent = `${language} (langue d'origine)`;
+                            select.appendChild(option);
+                        }
+                    }
+
+                    const subtitleUrl = language =>
+                        tools.dataset.subtitlesUrl.replace("LANG", encodeURIComponent(language));
+                    const statusUrl = language =>
+                        `${tools.dataset.statusUrl}?lang=${encodeURIComponent(language)}`;
+
+                    function activateTrack(language) {
+                        if (!player) {
+                            progress.textContent = "Les sous-titres ne sont pas disponibles : la vidéo n'est pas lisible dans le lecteur.";
+                            return;
+                        }
+                        let track = [...player.querySelectorAll("track")].find(
+                            item => item.srclang === language
+                        );
+                        if (!track) {
+                            track = document.createElement("track");
+                            track.kind = "subtitles";
+                            track.srclang = language;
+                            track.lang = language;
+                            if (language.startsWith("ar")) track.dir = "rtl";
+                            track.label = labels[language] || language;
+                            track.src = subtitleUrl(language);
+                            player.appendChild(track);
+                        }
+                        for (const textTrack of player.textTracks) textTrack.mode = "disabled";
+                        track.track.mode = "showing";
+                        progress.textContent = `Sous-titres ${track.label} activés.`;
+                    }
+
+                    async function readStatus(language) {
+                        const response = await fetch(statusUrl(language), {
+                            credentials: "same-origin",
+                            headers: {"Accept": "application/json"}
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error || "Impossible de lire le statut.");
+                        return data;
+                    }
+
+                    async function waitUntilReady(language, action) {
+                        if (polling) return;
+                        polling = true;
+                        spinner.hidden = false;
+                        progress.textContent = "Génération en cours…";
+                        try {
+                            while (true) {
+                                const data = await readStatus(language);
+                                addSourceLanguage(data.source_language);
+                                if (data.status === "DONE") {
+                                    if (action === "subtitles") activateTrack(data.language);
+                                    else window.location.assign(
+                                        `${tools.dataset.pdfUrl}?lang=${encodeURIComponent(language)}`
+                                    );
+                                    return;
+                                }
+                                if (data.status === "FAILED") {
+                                    const fallbackLanguage = data.fallback_language;
+                                    progress.textContent = data.error || "La génération a échoué.";
+                                    if (fallbackLanguage) {
+                                        fallback.hidden = false;
+                                        fallback.replaceChildren();
+                                        if (action === "subtitles") {
+                                            addSourceLanguage(fallbackLanguage);
+                                            const button = document.createElement("button");
+                                            button.type = "button";
+                                            button.className = "btn btn-secondary";
+                                            button.textContent = `Afficher la langue d'origine (${fallbackLanguage})`;
+                                            button.addEventListener("click", () => activateTrack(fallbackLanguage));
+                                            fallback.appendChild(button);
+                                        } else {
+                                            const link = document.createElement("a");
+                                            link.href = `${tools.dataset.pdfUrl}?lang=${encodeURIComponent(fallbackLanguage)}`;
+                                            link.textContent = `Télécharger le résumé dans la langue d'origine (${fallbackLanguage})`;
+                                            fallback.appendChild(link);
+                                        }
+                                    }
+                                    return;
+                                }
+                                if (data.status === "NOT_STARTED") return;
+                                await new Promise(resolve => window.setTimeout(resolve, 2000));
+                            }
+                        } catch (error) {
+                            progress.textContent = error.message || "Une erreur est survenue.";
+                        } finally {
+                            spinner.hidden = true;
+                            polling = false;
+                        }
+                    }
+
+                    async function requestContent(action, prepare) {
+                        const language = document.getElementById(
+                            action === "subtitles" ? "subtitle-language" : "summary-language"
+                        ).value;
+                        const sourceInput = document.getElementById("ai-source-file");
+                        const selectedSource = tools.dataset.canManage === "true"
+                            ? sourceInput?.files?.[0]
+                            : null;
+                        const forceInput = document.getElementById("ai-force");
+                        const forceRequested = tools.dataset.canManage === "true"
+                            && forceInput?.checked;
+                        progress.textContent = "Génération en cours…";
+                        spinner.hidden = false;
+                        fallback.hidden = true;
+                        try {
+                            const existing = await readStatus(language);
+                            if (existing.status === "DONE" && !forceRequested && !selectedSource) {
+                                if (action === "subtitles") activateTrack(language);
+                                else window.location.assign(
+                                    `${tools.dataset.pdfUrl}?lang=${encodeURIComponent(language)}`
+                                );
+                                return;
+                            }
+                            if (existing.status === "PENDING" || existing.status === "PROCESSING") {
+                                if (selectedSource) {
+                                    throw new Error("Une génération est déjà en cours; attendez sa fin avant de remplacer la source.");
+                                }
+                                await waitUntilReady(language, action);
+                                return;
+                            }
+                            const formData = new FormData();
+                            formData.set("lang", language);
+                            if (tools.dataset.canManage === "true") {
+                                if (forceRequested) formData.set("force", "true");
+                                if (prepare) formData.set("prepare", "true");
+                                if (selectedSource) formData.set("source_file", selectedSource);
+                            }
+                            const response = await fetch(tools.dataset.generateUrl, {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: {"X-CSRFToken": csrfToken, "Accept": "application/json"},
+                                body: formData
+                            });
+                            const data = await response.json();
+                            if (!response.ok) throw new Error(data.error || "La demande a échoué.");
+                            if (data.status === "DONE") {
+                                if (action === "subtitles") activateTrack(language);
+                                else window.location.assign(
+                                    `${tools.dataset.pdfUrl}?lang=${encodeURIComponent(language)}`
+                                );
+                            } else {
+                                await waitUntilReady(language, action);
+                            }
+                        } catch (error) {
+                            progress.textContent = error.message || "Une erreur est survenue.";
+                        } finally {
+                            if (!polling) spinner.hidden = true;
+                        }
+                    }
+
+                    tools.querySelectorAll("[data-ai-action]").forEach(button => {
+                        button.addEventListener("click", () =>
+                            requestContent(button.dataset.aiAction, button.dataset.prepare === "true")
+                        );
+                    });
+                })();
+            </script>
+        {% endif %}
         {% if user == video.creator %}
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem;">
                 <a href="{% url 'videos:video_edit' video.pk %}" class="btn btn-secondary">Modifier</a>

@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from .models import Category, Video
 
@@ -39,6 +40,17 @@ class VideoForm(forms.ModelForm):
         if duration <= 0:
             raise forms.ValidationError("La durée doit être supérieure à zéro.")
         return duration
+
+    def clean(self):
+        cleaned_data = super().clean()
+        text = f"{cleaned_data.get('title', '')} {cleaned_data.get('description', '')}"
+        max_length = getattr(settings, "MODERATION_MAX_TEXT_LENGTH", 5000)
+        if len(text) > max_length:
+            raise forms.ValidationError(
+                f"Le titre et la description ne peuvent pas dépasser "
+                f"{max_length} caractères au total."
+            )
+        return cleaned_data
 
 
 class CategoryForm(forms.ModelForm):

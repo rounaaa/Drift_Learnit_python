@@ -1,6 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ title }} — LearnIt{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'videos/ai/moderation.css' %}">
+{% endblock %}
 
 {% block content %}
 <div>
@@ -14,6 +20,12 @@
         </div>
         <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
+            <section class="moderation-panel" aria-labelledby="moderation-heading"
+                     data-moderation-url="{% url 'videos:moderate' %}">
+                <h2 id="moderation-heading">Vérification automatique du contenu</h2>
+                <p>L’analyse est informative et ne bloque pas l’envoi du formulaire.</p>
+                <div id="moderation-result" class="moderation-result" aria-live="polite" aria-atomic="true"></div>
+            </section>
             {% for field in form %}
                 <div class="form-group">
                     <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span style="color: var(--danger); margin-left: 2px;">*</span>{% endif %}</label>
@@ -30,4 +42,9 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'videos/ai/moderation.js' %}" defer></script>
 {% endblock %}
