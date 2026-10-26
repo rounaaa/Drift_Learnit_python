@@ -1,0 +1,47 @@
+{
+  "classification_report": {
+    "OK": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 30.0
+    },
+    "FLAGGED": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 30.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 60.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 60.0
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "OK",
+      "FLAGGED"
+    ],
+    "values": [
+      [
+        30,
+        0
+      ],
+      [
+        0,
+        30
+      ]
+    ]
+  },
+  "mean_prediction_time_seconds": 0.0010800249991007149,
+  "test_samples": 60
+}

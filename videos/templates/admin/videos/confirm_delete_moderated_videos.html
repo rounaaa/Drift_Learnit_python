@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Confirmer la suppression définitive</h1>
+<p>
+    Cette action supprimera définitivement {{ video_count }} vidéo(s), leur(s)
+    fichier(s) téléversé(s) et les signalements associés. Cette opération est
+    irréversible. Pour conserver les vidéos, annulez l’action.
+</p>
+<ul>
+    {% for video in videos %}
+        <li>{{ video.title }} — {{ video.get_status_display }}</li>
+    {% endfor %}
+</ul>
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    {% for selected_id in selected_ids %}
+        <input type="hidden" name="_selected_action" value="{{ selected_id }}">
+    {% endfor %}
+    <button type="submit" name="confirm" value="yes" class="deletelink">
+        Supprimer définitivement
+    </button>
+    <a href="{{ changelist_url }}">Annuler</a>
+</form>
+{% endblock %}

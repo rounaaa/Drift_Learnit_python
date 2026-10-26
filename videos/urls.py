@@ -5,6 +5,16 @@ from . import views
 app_name = "videos"
 
 urlpatterns = [
+    path("<int:pk>/ai/generate/", views.VideoSummaryGenerateView.as_view(), name="ai_generate"),
+    path("<int:pk>/ai/status/", views.VideoSummaryStatusView.as_view(), name="ai_status"),
+    path("<int:pk>/subtitles/<str:lang>.vtt", views.VideoSubtitlesView.as_view(), name="subtitles"),
+    path("<int:pk>/summary/pdf/", views.VideoSummaryPdfView.as_view(), name="summary_pdf"),
+    path("ai/moderate/", views.VideoModerationEndpointView.as_view(), name="moderate"),
+    path(
+        "admin/delete-pending/",
+        views.AdminDeletePendingVideosView.as_view(),
+        name="admin_delete_pending",
+    ),
     path("", views.VideoListView.as_view(), name="video_list"),
     path("feed/", views.LearnerVideoFeedView.as_view(), name="learner_feed"),
     path("create/", views.VideoCreateView.as_view(), name="video_create"),

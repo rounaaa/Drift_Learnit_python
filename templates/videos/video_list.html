@@ -7,7 +7,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div>
             <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.3rem;">
-                {% if is_creator %}Mes vidéos{% else %}Vidéos publiées{% endif %}
+                {% if is_creator %}Mes vidéos{% elif is_admin %}Gestion des vidéos{% else %}Vidéos publiées{% endif %}
             </h1>
             <p style="color: var(--text-muted);">Découvrez et gérez les vidéos de la plateforme.</p>
         </div>
@@ -27,6 +27,13 @@
                         <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
                             <span class="badge badge-published">{{ video.category.name }}</span>
                             <span class="badge badge-{{ video.status|lower }}">{{ video.get_status_display }}</span>
+                            {% for flag in video.moderation_flags.all %}
+                                {% if flag.status == "PENDING" %}
+                                    <span class="badge moderation-badge-pending">En vérification</span>
+                                {% elif flag.status == "REJECTED" %}
+                                    <span class="badge moderation-badge-rejected">Rejetée</span>
+                                {% endif %}
+                            {% endfor %}
                         </div>
                         <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">
                             <a href="{% url 'videos:video_detail' video.pk %}" style="text-decoration: none; color: var(--text-main);">{{ video.title }}</a>
@@ -39,6 +46,15 @@
                     </div>
                     {% if is_creator %}
                         <a href="{% url 'videos:video_edit' video.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
+                    {% endif %}
+                    {% if is_admin and video.pk in pending_video_ids %}
+                        <form method="post" action="{% url 'videos:admin_delete_pending' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="video_ids" value="{{ video.pk }}">
+                            <button type="submit" class="btn btn-secondary" aria-label="Supprimer définitivement {{ video.title }}">
+                                Supprimer définitivement
+                            </button>
+                        </form>
                     {% endif %}
                 </div>
             {% endfor %}

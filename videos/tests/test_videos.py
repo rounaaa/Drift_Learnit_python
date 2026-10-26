@@ -4,10 +4,12 @@ from tempfile import TemporaryDirectory
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
-from users.models import User
-from .forms import VideoForm
-from .models import Category, Video
+from videos.forms import VideoForm
+from videos.models import Category, Video
+
+User = get_user_model()
 
 
 class TemporaryMediaTestCase(TestCase):
