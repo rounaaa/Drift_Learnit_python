@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'gamification',
     'lives',
     'personalization',
+    # Agent conseiller pédagogique
+    'agent',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -155,3 +157,8 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 jours
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_HTTPONLY = True
+
+# ─── Agent conseiller pédagogique (Gemini API) ────────────────
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '[ENCRYPTION_KEY]')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+

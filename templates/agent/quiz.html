@@ -1,0 +1,1060 @@
+{% extends "base.html" %}
+
+{% block title %}Générateur de Quiz IA selon le niveau — LearnIt{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ═══════════════════════════════════════════════════════
+     DESIGN SYSTEM & STYLES DU QUIZ IA
+  ═══════════════════════════════════════════════════════ */
+  .quiz-page-container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .quiz-hero-card {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    color: white;
+    padding: 2.25rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px -5px rgba(49, 46, 129, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-hero-card::after {
+    content: "🎯";
+    position: absolute;
+    right: 2rem;
+    bottom: -1rem;
+    font-size: 7rem;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  .quiz-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.85rem;
+  }
+
+  .quiz-hero-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 0.6rem;
+  }
+
+  .quiz-hero-desc {
+    font-size: 0.98rem;
+    color: #e0e7ff;
+    max-width: 650px;
+    line-height: 1.6;
+  }
+
+  /* Configuration card */
+  .quiz-setup-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .form-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.75rem;
+  }
+
+  /* Level cards selection */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .level-card {
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.15rem 1.25rem;
+    cursor: pointer;
+    transition: var(--transition);
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    position: relative;
+  }
+
+  .level-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .level-card.selected {
+    border-color: var(--primary);
+    background: #f5f3ff;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  }
+
+  .level-card input[type="radio"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    accent-color: var(--primary);
+  }
+
+  .level-card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .level-card-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  /* Question count pills */
+  .pill-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .pill-option {
+    flex: 1;
+    min-width: 90px;
+    text-align: center;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    background: white;
+    color: var(--text-main);
+  }
+
+  .pill-option:hover {
+    border-color: var(--primary);
+  }
+
+  .pill-option.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  .pill-option input[type="radio"] {
+    display: none;
+  }
+
+  /* Main Action Button */
+  .btn-generate-quiz {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+    transition: var(--transition);
+  }
+
+  .btn-generate-quiz:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+  }
+
+  .btn-generate-quiz:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ZONE DU QUIZ INTERACTIF (EN COURS DE JEU)
+  ═══════════════════════════════════════════════════════ */
+  #quiz-player-container {
+    display: none;
+  }
+
+  .player-header {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .player-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .progress-bar-wrapper {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #8b5cf6);
+    width: 0%;
+    transition: width 0.35s ease;
+  }
+
+  /* Question Card */
+  .question-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.25rem 2rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-number {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.45;
+    margin-bottom: 1.75rem;
+  }
+
+  /* Options list */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .option-btn {
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    color: var(--text-main);
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.98rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: #f5f3ff;
+    transform: translateX(4px);
+  }
+
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .option-btn.selected-correct {
+    border-color: var(--success) !important;
+    background: var(--success-light) !important;
+    color: #065f46 !important;
+  }
+
+  .option-btn.selected-correct .option-letter {
+    background: var(--success);
+    color: white;
+  }
+
+  .option-btn.selected-wrong {
+    border-color: var(--danger) !important;
+    background: var(--danger-light) !important;
+    color: #991b1b !important;
+  }
+
+  .option-btn.selected-wrong .option-letter {
+    background: var(--danger);
+    color: white;
+  }
+
+  .option-btn.show-correct {
+    border-color: var(--success) !important;
+    background: var(--success-light) !important;
+    color: #065f46 !important;
+  }
+
+  .option-btn.show-correct .option-letter {
+    background: var(--success);
+    color: white;
+  }
+
+  /* Explanation box */
+  .explanation-box {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: #faf5ff;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .explanation-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #581c87;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .explanation-text {
+    font-size: 0.92rem;
+    color: #3b0764;
+    line-height: 1.55;
+  }
+
+  .question-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ÉCRAN DES RÉSULTATS DU QUIZ
+  ═══════════════════════════════════════════════════════ */
+  #quiz-results-container {
+    display: none;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .results-badge-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .score-circle {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+    color: white;
+    margin: 1.5rem auto;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+  }
+
+  .score-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .score-total {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 600;
+  }
+
+  .results-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+  }
+
+  .results-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+
+  .results-summary-list {
+    text-align: left;
+    margin: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .summary-item {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+  }
+
+  .summary-item.correct {
+    border-left: 4px solid var(--success);
+  }
+
+  .summary-item.wrong {
+    border-left: 4px solid var(--danger);
+  }
+
+  .summary-q-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+    color: var(--text-main);
+  }
+
+  .summary-q-ans {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .results-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-page-container">
+
+  <!-- BREADCRUMB -->
+  <div>
+    <a href="{% url 'course_catalog' %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">
+      &larr; Retour au catalogue
+    </a>
+  </div>
+
+  <!-- HERO BANNER -->
+  <div class="quiz-hero-card">
+    <div class="quiz-hero-badge">⚡ Évaluation intelligente IA</div>
+    <h1 class="quiz-hero-title">Générateur de Quiz selon le niveau</h1>
+    <p class="quiz-hero-desc">
+      Créez instantanément votre propre quiz QCM personnalisé grâce à l'IA. Sélectionnez votre cours ou sujet, 
+      définissez votre niveau de difficulté et testez vos connaissances avec correction immédiate.
+    </p>
+  </div>
+
+  <!-- FORMULAIRE DE CONFIGURATION DU QUIZ -->
+  <div class="quiz-setup-card" id="quiz-setup-card">
+    <form id="quiz-config-form">
+      {% csrf_token %}
+
+      <!-- 1. CHOIX DU SUJET OU COURS -->
+      <div class="form-group">
+        <label class="form-section-title">
+          <span>📚</span> 1. Choisissez le sujet ou un cours LearnIt
+        </label>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Choix par cours LearnIt -->
+          <div>
+            <label style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+              Option A : Sélectionner un cours de la plateforme
+            </label>
+            <select class="form-select" id="course-select" style="width: 100%; padding: 0.75rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); font-family: inherit; font-size: 0.95rem;">
+              <option value="">-- Sujet libre personnalisé (saisir ci-dessous) --</option>
+              {% if enrolled_courses %}
+                <optgroup label="🌟 Mes cours suivis">
+                  {% for c in enrolled_courses %}
+                    <option value="{{ c.pk }}" data-level="{{ c.level }}" {% if selected_course_id == c.pk %}selected{% endif %}>
+                      {{ c.title }} (Niveau : {{ c.get_level_display }})
+                    </option>
+                  {% endfor %}
+                </optgroup>
+              {% endif %}
+              <optgroup label="📖 Tous les cours du catalogue">
+                {% for c in courses %}
+                  <option value="{{ c.pk }}" data-level="{{ c.level }}" {% if selected_course_id == c.pk %}selected{% endif %}>
+                    {{ c.title }} — {{ c.get_category_display }} ({{ c.get_level_display }})
+                  </option>
+                {% endfor %}
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Choix par sujet libre -->
+          <div>
+            <label style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+              Option B : Ou tapez le sujet libre de votre choix
+            </label>
+            <input 
+              type="text" 
+              id="custom-topic-input" 
+              class="form-control" 
+              placeholder="Ex: Python orienté objet, SQL requêtes avancées, Algorithmes de tri..." 
+              value="{% if selected_course %}{{ selected_course.title }}{% endif %}"
+              style="width: 100%; padding: 0.75rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); font-family: inherit; font-size: 0.95rem;"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. CHOIX DU NIVEAU -->
+      <div class="form-group">
+        <label class="form-section-title">
+          <span>📊</span> 2. Choisissez le niveau de difficulté
+        </label>
+        <div class="level-grid">
+          {% for lvl_key, lvl_label, lvl_desc in levels %}
+            <label class="level-card {% if selected_level == lvl_key %}selected{% endif %}" id="card-{{ lvl_key }}">
+              <input 
+                type="radio" 
+                name="level" 
+                value="{{ lvl_key }}" 
+                {% if selected_level == lvl_key %}checked{% endif %} 
+                onchange="selectLevel('{{ lvl_key }}')"
+              />
+              <div class="level-card-title">{{ lvl_label }}</div>
+              <div class="level-card-desc">{{ lvl_desc }}</div>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 3. NOMBRE DE QUESTIONS -->
+      <div class="form-group">
+        <label class="form-section-title">
+          <span>🔢</span> 3. Nombre de questions
+        </label>
+        <div class="pill-group">
+          <label class="pill-option" id="pill-3">
+            <input type="radio" name="num_questions" value="3" onchange="selectQuestionsCount(3)" />
+            ⚡ 3 Express
+          </label>
+          <label class="pill-option selected" id="pill-5">
+            <input type="radio" name="num_questions" value="5" checked onchange="selectQuestionsCount(5)" />
+            🎯 5 Standard
+          </label>
+          <label class="pill-option" id="pill-10">
+            <input type="radio" name="num_questions" value="10" onchange="selectQuestionsCount(10)" />
+            🏆 10 Défi
+          </label>
+        </div>
+      </div>
+
+      <!-- BOUTON DE GÉNÉRATION IA -->
+      <button type="button" id="btn-start-generation" class="btn-generate-quiz" onclick="generateQuiz()">
+        <span id="btn-icon">✨</span>
+        <span id="btn-text">Générer mon Quiz IA</span>
+      </button>
+
+      <div id="gen-status-msg" style="display: none; text-align: center; margin-top: 1rem; color: var(--primary); font-size: 0.92rem; font-weight: 600;">
+        ⏳ L'IA analyse le sujet et conçoit les questions selon votre niveau... Veuillez patienter quelques secondes.
+      </div>
+    </form>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       LECTEUR DE QUIZ INTERACTIF
+  ═══════════════════════════════════════════════════════ -->
+  <div id="quiz-player-container">
+
+    <!-- Header du lecteur -->
+    <div class="player-header">
+      <div>
+        <h2 id="player-quiz-title" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">Titre du Quiz</h2>
+        <div class="player-badges">
+          <span class="badge" id="player-level-badge" style="background: #eef2ff; color: var(--primary); font-weight: 700;">Niveau</span>
+          <span class="badge" id="player-topic-badge" style="background: #f1f5f9; color: var(--text-muted); font-weight: 600;">Sujet</span>
+          <span class="badge" id="player-score-badge" style="background: var(--success-light); color: var(--success); font-weight: 700;">Score : 0/0</span>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="restartToConfig()">
+          ⚙️ Nouveau quiz
+        </button>
+      </div>
+
+      <!-- Barre de progression -->
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Carte de la question courante -->
+    <div class="question-card" id="question-card">
+      <div class="question-number" id="q-counter">Question 1 sur 5</div>
+      <h3 class="question-title" id="q-text">Chargement de la question...</h3>
+
+      <!-- Liste des 4 choix -->
+      <div class="options-list" id="q-options-container">
+        <!-- Rempli en JS -->
+      </div>
+
+      <!-- Boîte d'explication pédagogique -->
+      <div class="explanation-box" id="q-explanation-box">
+        <div class="explanation-title" id="explanation-status">💡 Explication pédagogique</div>
+        <div class="explanation-text" id="explanation-text">...</div>
+      </div>
+
+      <!-- Action : Question suivante -->
+      <div class="question-actions">
+        <button type="button" id="btn-next-question" class="btn btn-primary" style="display: none;" onclick="goToNextQuestion()">
+          Question suivante &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       ÉCRAN DES RÉSULTATS DU QUIZ
+  ═══════════════════════════════════════════════════════ -->
+  <div id="quiz-results-container">
+    <div class="results-badge-icon" id="res-icon">🏆</div>
+    <h2 class="results-title" id="res-title">Félicitations !</h2>
+    <p class="results-desc" id="res-desc">Vous avez terminé l'évaluation avec succès.</p>
+
+    <div class="score-circle">
+      <span class="score-value" id="res-score">5/5</span>
+      <span class="score-total" id="res-percent">100%</span>
+    </div>
+
+    <!-- Récapitulatif détaillé -->
+    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); text-align: left; margin-top: 1.5rem;">
+      📋 Récapitulatif des réponses
+    </h3>
+    <div class="results-summary-list" id="results-summary">
+      <!-- Rempli en JS -->
+    </div>
+
+    <div class="results-actions">
+      <button type="button" class="btn btn-primary" onclick="retryCurrentQuiz()">
+        🔄 Recommencer ce quiz
+      </button>
+      <button type="button" class="btn btn-secondary" onclick="restartToConfig()">
+        ✨ Créer un autre quiz
+      </button>
+      <a href="{% url 'course_catalog' %}" class="btn btn-secondary">
+        📖 Retour au catalogue
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ─── Variables d'état du Quiz ──────────────────────────────────────────────
+  const GENERATE_URL = "{% url 'agent_quiz_generate' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+
+  let currentQuiz = null;
+  let currentQuestionIndex = 0;
+  let userAnswers = []; // Stocke { questionId, chosenIndex, isCorrect }
+  let userScore = 0;
+
+  // ─── Interaction sur le formulaire de configuration ─────────────────────────
+  const courseSelect = document.getElementById("course-select");
+  const topicInput   = document.getElementById("custom-topic-input");
+
+  courseSelect.addEventListener("change", function () {
+    const selectedOption = this.options[this.selectedIndex];
+    if (this.value) {
+      topicInput.value = selectedOption.text.split(" (")[0].trim();
+      const courseLvl = selectedOption.getAttribute("data-level");
+      if (courseLvl) {
+        selectLevel(courseLvl);
+      }
+    }
+  });
+
+  function selectLevel(levelKey) {
+    document.querySelectorAll(".level-card").forEach(c => c.classList.remove("selected"));
+    const targetCard = document.getElementById(`card-${levelKey}`);
+    if (targetCard) {
+      targetCard.classList.add("selected");
+      const radio = targetCard.querySelector("input[type='radio']");
+      if (radio) radio.checked = true;
+    }
+  }
+
+  function selectQuestionsCount(count) {
+    document.querySelectorAll(".pill-option").forEach(p => p.classList.remove("selected"));
+    const targetPill = document.getElementById(`pill-${count}`);
+    if (targetPill) {
+      targetPill.classList.add("selected");
+      const radio = targetPill.querySelector("input[type='radio']");
+      if (radio) radio.checked = true;
+    }
+  }
+
+  // ─── Génération du Quiz via Gemini (AJAX) ──────────────────────────────────
+  async function generateQuiz() {
+    const btn = document.getElementById("btn-start-generation");
+    const statusMsg = document.getElementById("gen-status-msg");
+    const btnIcon = document.getElementById("btn-icon");
+    const btnText = document.getElementById("btn-text");
+
+    // Récupérer les paramètres
+    let topic = topicInput.value.trim();
+    const courseId = courseSelect.value || null;
+    const selectedLevelRadio = document.querySelector("input[name='level']:checked");
+    const level = selectedLevelRadio ? selectedLevelRadio.value : "BEGINNER";
+    const selectedCountRadio = document.querySelector("input[name='num_questions']:checked");
+    const numQuestions = selectedCountRadio ? parseInt(selectedCountRadio.value) : 5;
+
+    if (!topic && !courseId) {
+      alert("Veuillez choisir un cours ou saisir un sujet pour votre quiz.");
+      topicInput.focus();
+      return;
+    }
+
+    // Afficher l'état de chargement
+    btn.disabled = true;
+    btnIcon.innerHTML = '<div class="spinner"></div>';
+    btnText.textContent = "Génération IA en cours...";
+    statusMsg.style.display = "block";
+
+    try {
+      const response = await fetch(GENERATE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": CSRF_TOKEN,
+        },
+        body: JSON.stringify({
+          topic: topic,
+          course_id: courseId,
+          level: level,
+          num_questions: numQuestions
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.quiz) {
+        startQuiz(data.quiz);
+      } else {
+        alert("Erreur lors de la génération : " + (data.error || "Impossible de générer le quiz."));
+      }
+    } catch (err) {
+      alert("Erreur réseau : " + err.message);
+    } finally {
+      btn.disabled = false;
+      btnIcon.textContent = "✨";
+      btnText.textContent = "Générer mon Quiz IA";
+      statusMsg.style.display = "none";
+    }
+  }
+
+  // ─── Démarrage du lecteur de Quiz ──────────────────────────────────────────
+  function startQuiz(quizData) {
+    currentQuiz = quizData;
+    currentQuestionIndex = 0;
+    userAnswers = [];
+    userScore = 0;
+
+    // Basculer l'affichage
+    document.getElementById("quiz-setup-card").style.display = "none";
+    document.getElementById("quiz-results-container").style.display = "none";
+    document.getElementById("quiz-player-container").style.display = "block";
+
+    // Mettre à jour l'en-tête du lecteur
+    document.getElementById("player-quiz-title").textContent = quizData.title || "Quiz d'évaluation";
+    document.getElementById("player-level-badge").textContent = "Niveau : " + (quizData.level_display || quizData.level);
+    document.getElementById("player-topic-badge").textContent = quizData.topic || "Général";
+    updateScoreBadge();
+
+    // Afficher la première question
+    renderQuestion(currentQuestionIndex);
+    window.scrollTo({ top: 100, behavior: "smooth" });
+  }
+
+  function updateScoreBadge() {
+    document.getElementById("player-score-badge").textContent = 
+      `Score : ${userScore} / ${userAnswers.length} (${currentQuiz.questions.length} au total)`;
+  }
+
+  // ─── Rendu d'une question ──────────────────────────────────────────────────
+  function renderQuestion(index) {
+    const q = currentQuiz.questions[index];
+    const total = currentQuiz.questions.length;
+
+    // Progression
+    const progressPercent = ((index) / total) * 100;
+    document.getElementById("progress-fill").style.width = `${progressPercent}%`;
+
+    // Énoncé
+    document.getElementById("q-counter").textContent = `Question ${index + 1} sur ${total}`;
+    document.getElementById("q-text").textContent = q.question;
+
+    // Masquer les explications et le bouton suivant
+    const explanationBox = document.getElementById("q-explanation-box");
+    explanationBox.style.display = "none";
+    const nextBtn = document.getElementById("btn-next-question");
+    nextBtn.style.display = "none";
+    nextBtn.textContent = (index === total - 1) ? "Voir mon score & bilan 🏆" : "Question suivante →";
+
+    // Remplir les 4 options
+    const container = document.getElementById("q-options-container");
+    container.innerHTML = "";
+
+    const letters = ["A", "B", "C", "D"];
+    q.options.forEach((optText, optIdx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option-btn";
+      btn.innerHTML = `
+        <span class="option-letter">${letters[optIdx]}</span>
+        <span style="flex:1;">${escapeHtml(optText)}</span>
+      `;
+      btn.addEventListener("click", () => handleSelectOption(optIdx));
+      container.appendChild(btn);
+    });
+  }
+
+  // ─── Sélection d'une option et correction immédiate ───────────────────────
+  function handleSelectOption(chosenIdx) {
+    const q = currentQuiz.questions[currentQuestionIndex];
+    const isCorrect = (chosenIdx === q.correct_index);
+
+    if (isCorrect) {
+      userScore++;
+    }
+
+    userAnswers.push({
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correct_index,
+      chosenIndex: chosenIdx,
+      isCorrect: isCorrect,
+      explanation: q.explanation
+    });
+
+    updateScoreBadge();
+
+    // Désactiver tous les boutons d'options et colorer
+    const buttons = document.querySelectorAll("#q-options-container .option-btn");
+    buttons.forEach((btn, idx) => {
+      btn.disabled = true;
+      if (idx === q.correct_index) {
+        btn.classList.add("show-correct");
+      }
+      if (idx === chosenIdx) {
+        btn.classList.add(isCorrect ? "selected-correct" : "selected-wrong");
+      }
+    });
+
+    // Afficher l'explication
+    const explanationBox = document.getElementById("q-explanation-box");
+    const statusEl = document.getElementById("explanation-status");
+    const textEl = document.getElementById("explanation-text");
+
+    if (isCorrect) {
+      statusEl.innerHTML = "✅ <strong>Bravo, bonne réponse !</strong>";
+      explanationBox.style.background = "var(--success-light)";
+      explanationBox.style.borderColor = "#a7f3d0";
+    } else {
+      statusEl.innerHTML = "❌ <strong>Réponse incorrecte</strong>";
+      explanationBox.style.background = "#fff1f2";
+      explanationBox.style.borderColor = "#fecdd3";
+    }
+
+    textEl.textContent = q.explanation || "Bonne réponse : " + q.options[q.correct_index];
+    explanationBox.style.display = "block";
+
+    // Afficher le bouton suivant
+    document.getElementById("btn-next-question").style.display = "inline-flex";
+  }
+
+  // ─── Passage à la question suivante ou écran final ─────────────────────────
+  function goToNextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < currentQuiz.questions.length) {
+      renderQuestion(currentQuestionIndex);
+      window.scrollTo({ top: 150, behavior: "smooth" });
+    } else {
+      showResults();
+    }
+  }
+
+  // ─── Affichage des résultats finaux ────────────────────────────────────────
+  function showResults() {
+    document.getElementById("quiz-player-container").style.display = "none";
+    const resContainer = document.getElementById("quiz-results-container");
+    resContainer.style.display = "block";
+
+    const total = currentQuiz.questions.length;
+    const percent = Math.round((userScore / total) * 100);
+
+    document.getElementById("res-score").textContent = `${userScore}/${total}`;
+    document.getElementById("res-percent").textContent = `${percent}%`;
+
+    const iconEl = document.getElementById("res-icon");
+    const titleEl = document.getElementById("res-title");
+    const descEl = document.getElementById("res-desc");
+
+    if (percent === 100) {
+      iconEl.textContent = "🏆";
+      titleEl.textContent = "Score Parfait ! Félicitations !";
+      descEl.textContent = "Vous maîtrisez parfaitement ce sujet à ce niveau.";
+    } else if (percent >= 75) {
+      iconEl.textContent = "🎉";
+      titleEl.textContent = "Très bon résultat !";
+      descEl.textContent = "Vos connaissances sont solides. Continuez sur cette lancée !";
+    } else if (percent >= 50) {
+      iconEl.textContent = "👍";
+      titleEl.textContent = "Bon début, persévérez !";
+      descEl.textContent = "Vous avez acquis de bonnes bases, relisez les explications pour progresser.";
+    } else {
+      iconEl.textContent = "💡";
+      titleEl.textContent = "Ne vous découragez pas !";
+      descEl.textContent = "Prenez le temps d'étudier le cours et tentez à nouveau ce quiz.";
+    }
+
+    // Récapitulatif détaillé
+    const summaryList = document.getElementById("results-summary");
+    summaryList.innerHTML = "";
+
+    const letters = ["A", "B", "C", "D"];
+    userAnswers.forEach((ans, idx) => {
+      const item = document.createElement("div");
+      item.className = `summary-item ${ans.isCorrect ? "correct" : "wrong"}`;
+      item.innerHTML = `
+        <div class="summary-q-title">
+          ${ans.isCorrect ? "✅" : "❌"} Question ${idx + 1} : ${escapeHtml(ans.question)}
+        </div>
+        <div class="summary-q-ans">
+          <div><strong>Votre réponse :</strong> ${letters[ans.chosenIndex]}. ${escapeHtml(ans.options[ans.chosenIndex])}</div>
+          ${!ans.isCorrect ? `<div style="color: #065f46; margin-top:2px;"><strong>Bonne réponse :</strong> ${letters[ans.correctIndex]}. ${escapeHtml(ans.options[ans.correctIndex])}</div>` : ""}
+          <div style="margin-top: 0.35rem; color: #4b5563; font-style: italic;">💡 ${escapeHtml(ans.explanation)}</div>
+        </div>
+      `;
+      summaryList.appendChild(item);
+    });
+
+    window.scrollTo({ top: 100, behavior: "smooth" });
+  }
+
+  // ─── Actions Recommencer & Configurer ──────────────────────────────────────
+  function retryCurrentQuiz() {
+    if (currentQuiz) {
+      startQuiz(currentQuiz);
+    }
+  }
+
+  function restartToConfig() {
+    document.getElementById("quiz-player-container").style.display = "none";
+    document.getElementById("quiz-results-container").style.display = "none";
+    document.getElementById("quiz-setup-card").style.display = "block";
+    window.scrollTo({ top: 100, behavior: "smooth" });
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+</script>
+{% endblock %}

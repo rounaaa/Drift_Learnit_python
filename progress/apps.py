@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class ProgressConfig(AppConfig):
-    name = 'progress'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "progress"
+
+    def ready(self):
+        from . import signals  # noqa: F401

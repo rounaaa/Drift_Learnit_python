@@ -9,40 +9,357 @@
     <p class="progress-muted">Formateur : {{ course_progress.course.creator.username }}</p>
 </section>
 
-<section class="progress-card" style="margin-bottom: 1.5rem;">
+<section class="progress-card progress-hero" style="margin-bottom: 1.5rem;"
+         data-course-progress
+         data-total-lessons="{{ total_lessons_count }}"
+         data-completed-lessons="{{ completed_lessons_count }}">
     <div class="progress-row">
-        <h2>Progression : {{ course_progress.progress_percentage }} %</h2>
-        <span class="badge {% if course_progress.status == 'COMPLETED' %}badge-completed{% elif course_progress.status == 'IN_PROGRESS' %}badge-active{% else %}badge-draft{% endif %}">{{ course_progress.get_status_display }}</span>
+        <div>
+            <p class="progress-muted">Votre avancée</p>
+            <h2><span data-progress-percentage>{{ course_progress.progress_percentage }}</span> %</h2>
+        </div>
+        <span data-course-status class="badge {% if course_progress.status == 'COMPLETED' %}badge-completed{% elif course_progress.status == 'IN_PROGRESS' %}badge-active{% else %}badge-draft{% endif %}">{{ course_progress.get_status_display }}</span>
     </div>
-    <div class="progress-meter"><span style="width: {{ course_progress.progress_percentage }}%;"></span></div>
+    <div class="progress-meter" role="progressbar" aria-label="Progression du cours"
+         aria-valuemin="0" aria-valuemax="100"
+         aria-valuenow="{{ course_progress.progress_percentage }}"
+         data-progress-meter>
+        <span style="width: {{ course_progress.progress_percentage }}%;" data-progress-bar></span>
+    </div>
+    <div class="progress-row">
+        <small class="progress-muted"><span data-completed-count>{{ completed_lessons_count }}</span> / {{ total_lessons_count }} leçons terminées</small>
+        {% if next_lesson_id %}
+            <a class="btn btn-primary btn-sm" href="#lesson-{{ next_lesson_id }}" data-next-lesson-link>Continuer le cours</a>
+        {% elif total_lessons_count %}
+            <span class="progress-muted">Bravo, toutes les leçons sont terminées !</span>
+        {% endif %}
+    </div>
     <p class="progress-muted">Dernier accès : {{ course_progress.last_accessed_at|date:"d/m/Y H:i" }}</p>
     {% if course_progress.completed_at %}<p class="progress-muted">Terminé le {{ course_progress.completed_at|date:"d/m/Y H:i" }}</p>{% endif %}
+    <p class="progress-feedback" data-progress-feedback role="status" aria-live="polite"></p>
 </section>
 
-<section class="progress-card">
-    <h2>Leçons</h2>
+<section class="progress-card learning-report" style="margin-bottom: 1.5rem;">
+    <div class="progress-row">
+        <div>
+            <h2>Mon bilan d’apprentissage</h2>
+            <p class="progress-muted">Basé sur vos leçons terminées et vos réponses aux quiz de ce cours.</p>
+        </div>
+        {% if learning_report.average_score != None %}
+            <span class="badge badge-active">{{ learning_report.average_score }} % de bonnes réponses</span>
+        {% endif %}
+    </div>
+    <p class="progress-muted">
+        {{ learning_report.completed_lesson_count }} leçon{{ learning_report.completed_lesson_count|pluralize }} terminée{{ learning_report.completed_lesson_count|pluralize }}
+        · {{ learning_report.quiz_count }} quiz terminé{{ learning_report.quiz_count|pluralize }}
+        · {{ learning_report.answered_count }} réponse{{ learning_report.answered_count|pluralize }} analysée{{ learning_report.answered_count|pluralize }}
+    </p>
+    <p>{{ learning_report.status_message }}</p>
+
+    <div class="report-ai-action">
+        <p class="progress-muted">Gemini recevra uniquement les résultats de ce cours, les questions de quiz associées et les titres des leçons. Aucun nom, e-mail ou identifiant de compte ne lui sera transmis.</p>
+        <button type="button" class="btn btn-secondary btn-sm"
+                data-ai-report-button
+                data-ai-report-url="{% url 'progress:ai_report' course_progress.pk %}">
+            Obtenir des conseils personnalisés avec Gemini
+        </button>
+        <p class="progress-feedback" data-ai-report-status role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="report-ai-result" data-ai-report-result hidden>
+        <h3>Conseils personnalisés</h3>
+        <div class="report-columns">
+            <div><h4>Points forts</h4><ul data-ai-strengths></ul></div>
+            <div><h4>Difficultés observées</h4><ul data-ai-difficulties></ul></div>
+            <div><h4>Conseils</h4><ul data-ai-advice></ul></div>
+        </div>
+        <h4>Méthodes de révision</h4>
+        <ul data-ai-review-methods></ul>
+        <h4>Plan d’amélioration</h4>
+        <ol data-ai-plan></ol>
+    </div>
+
+    <div class="report-columns">
+        <div>
+            <h3>Points réussis</h3>
+            {% if learning_report.strengths %}
+                <ul>
+                    {% for question in learning_report.strengths %}<li>{{ question }}</li>{% endfor %}
+                </ul>
+            {% else %}
+                <p class="progress-muted">Vos bonnes réponses apparaîtront ici après un quiz terminé.</p>
+            {% endif %}
+        </div>
+        <div>
+            <h3>À revoir</h3>
+            {% if learning_report.review_items %}
+                <ul>
+                    {% for item in learning_report.review_items %}
+                        <li>{{ item.text }}{% if item.count > 1 %} <span class="progress-muted">({{ item.count }} erreurs)</span>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="progress-muted">Aucune erreur récurrente détectée dans les quiz terminés.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="progress-row report-next">
+        <div>
+            <h3>Prochaine étape</h3>
+            {% if learning_report.next_lesson %}
+                <p class="progress-muted">Continuez avec la leçon {{ learning_report.next_lesson.order }} : {{ learning_report.next_lesson.title }}</p>
+            {% else %}
+                <p class="progress-muted">Toutes les leçons du cours sont terminées. Vous pouvez refaire un quiz pour consolider vos acquis.</p>
+            {% endif %}
+        </div>
+        {% if learning_report.next_lesson %}
+            <a class="btn btn-primary btn-sm" href="#lesson-{{ learning_report.next_lesson.pk }}">Continuer</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="progress-card" style="margin-bottom: 1.5rem;">
+    <div class="progress-row" style="margin-bottom: 1rem;">
+        <div>
+            <h2>Programme du cours</h2>
+            <p class="progress-muted">Regardez chaque vidéo ou validez manuellement une leçon après l’avoir étudiée.</p>
+        </div>
+        <span class="badge badge-published">{{ total_lessons_count }} leçons</span>
+    </div>
+    <div class="progress-list">
     {% for lesson in lessons %}
-        <div class="lesson-row progress-row">
-            <div>
-                <strong>{{ lesson.order }}. {{ lesson.title }}</strong>
-                {% if lesson.description %}<p class="progress-muted">{{ lesson.description }}</p>{% endif %}
-            </div>
-            <div class="progress-row">
+        <article id="lesson-{{ lesson.pk }}"
+                 class="lesson-card {% if lesson.pk in completed_lesson_ids %}is-completed{% endif %}"
+                 data-lesson-card
+                 data-completed="{% if lesson.pk in completed_lesson_ids %}true{% else %}false{% endif %}">
+            <div class="lesson-content">
+                <div>
+                    <h3>{{ lesson.order }}. {{ lesson.title }}</h3>
+                    {% if lesson.description %}<p class="progress-muted">{{ lesson.description }}</p>{% endif %}
+                </div>
+                <div class="lesson-actions">
+                    <span data-lesson-status class="badge {% if lesson.pk in completed_lesson_ids %}badge-completed{% else %}badge-draft{% endif %}">
+                        {% if lesson.pk in completed_lesson_ids %}Terminée{% else %}À faire{% endif %}
+                    </span>
                 {% if lesson.video_id and lesson.video.status == "PUBLISHED" %}
-                    <a class="btn btn-secondary" href="{% url 'videos:video_detail' lesson.video_id %}">Regarder la vidéo</a>
+                    <a class="btn btn-secondary btn-sm" href="#video-{{ lesson.pk }}">Aller à la vidéo</a>
                 {% endif %}
-                {% if lesson.pk in completed_lesson_ids %}
-                    <span class="badge badge-completed">Terminée</span>
-                {% else %}
-                    <form method="post" action="{% url 'progress:complete_lesson' lesson.pk %}">
+                {% if lesson.pk not in completed_lesson_ids %}
+                    <form method="post" action="{% url 'progress:complete_lesson' lesson.pk %}" data-complete-form>
                         {% csrf_token %}
-                        <button class="btn btn-primary" type="submit">Marquer comme terminée</button>
+                        <button class="btn btn-primary btn-sm" type="submit">Marquer terminée</button>
                     </form>
                 {% endif %}
+                </div>
             </div>
-        </div>
+        {% if lesson.video_id and lesson.video.status == "PUBLISHED" %}
+            <video id="video-{{ lesson.pk }}" controls preload="metadata" playsinline
+                   data-lesson-video
+                   data-lesson-id="{{ lesson.pk }}"
+                   data-activity-url="{% url 'progress:lesson_video_activity' lesson.pk %}"
+                   class="lesson-video">
+                <source src="{{ lesson.video.video_file.url }}">
+                Votre navigateur ne prend pas en charge la lecture vidéo.
+            </video>
+        {% endif %}
+        </article>
     {% empty %}
         <p class="progress-muted">Ce cours ne contient pas encore de leçon.</p>
     {% endfor %}
+    </div>
 </section>
+
+<section class="progress-card" style="margin-top: 1.5rem;">
+    <h2>Quiz du cours</h2>
+    <p class="progress-muted" style="margin-bottom: 1rem;">
+        Les réponses et le score sont enregistrés et corrigés côté serveur.
+    </p>
+    <form method="post" action="{% url 'progress:start_quiz' course_progress.course_id %}" class="progress-row">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ quiz_form.num_questions.label_tag }}
+            {{ quiz_form.num_questions }}
+        </div>
+        <button type="submit" class="btn btn-primary">Générer et commencer le quiz</button>
+    </form>
+    {% if recent_quiz_attempts %}
+        <h3 style="margin-top: 1.25rem;">Tentatives récentes</h3>
+        <ul>
+            {% for attempt in recent_quiz_attempts %}
+                <li>
+                    <a href="{% url 'progress:quiz_attempt' attempt.pk %}">
+                        {{ attempt.created_at|date:"d/m/Y H:i" }} —
+                        {% if attempt.status == "COMPLETED" %}{{ attempt.score }}/{{ attempt.total_questions }}{% else %}En cours{% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const button = document.querySelector("[data-ai-report-button]");
+        if (!button) return;
+        const status = document.querySelector("[data-ai-report-status]");
+        const result = document.querySelector("[data-ai-report-result]");
+        const token = document.querySelector("input[name=csrfmiddlewaretoken]")?.value || "";
+        const fillList = (selector, entries, format = (entry) => entry) => {
+            const list = document.querySelector(selector);
+            list.replaceChildren();
+            entries.forEach((entry) => {
+                const item = document.createElement("li");
+                item.textContent = format(entry);
+                list.append(item);
+            });
+        };
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            status.textContent = "Gemini prépare vos conseils…";
+            status.dataset.state = "";
+            try {
+                const response = await fetch(button.dataset.aiReportUrl, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "X-CSRFToken": token, "Accept": "application/json" },
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.message || "Le bilan Gemini est momentanément indisponible.");
+                }
+                const feedback = payload.feedback;
+                fillList("[data-ai-strengths]", feedback.strengths);
+                fillList("[data-ai-difficulties]", feedback.difficulties);
+                fillList("[data-ai-advice]", feedback.advice);
+                fillList("[data-ai-review-methods]", feedback.review_methods,
+                    (item) => `${item.title} : ${item.description}`);
+                fillList("[data-ai-plan]", feedback.improvement_plan,
+                    (item) => `${item.action} (${item.duration})`);
+                result.hidden = false;
+                status.textContent = "Conseils générés à partir des données affichées dans ce bilan.";
+                status.dataset.state = "success";
+            } catch (error) {
+                status.textContent = `${error.message} Le bilan calculé par LearnIt reste disponible ci-dessus.`;
+                status.dataset.state = "error";
+            } finally {
+                button.disabled = false;
+            }
+        });
+    })();
+</script>
+<script>
+    (() => {
+        const csrfToken = () => {
+            const tokenInput = document.querySelector("input[name=csrfmiddlewaretoken]");
+            if (tokenInput) return tokenInput.value;
+            const cookie = document.cookie.split("; ").find((item) => item.startsWith("csrftoken="));
+            return cookie ? decodeURIComponent(cookie.split("=")[1]) : "";
+        };
+        const feedback = document.querySelector("[data-progress-feedback]");
+        const showFeedback = (message, state) => {
+            feedback.textContent = message;
+            feedback.dataset.state = state;
+        };
+        const updateCourseProgress = (result) => {
+            const percentage = Number(result.progress_percentage);
+            document.querySelector("[data-progress-percentage]").textContent = percentage;
+            const meter = document.querySelector("[data-progress-meter]");
+            meter.setAttribute("aria-valuenow", percentage);
+            document.querySelector("[data-progress-bar]").style.width = `${percentage}%`;
+
+            const lessonCard = result.lesson_id
+                ? document.querySelector(`[data-lesson-id="${result.lesson_id}"]`)?.closest("[data-lesson-card]")
+                : null;
+            if (lessonCard && lessonCard.dataset.completed !== "true") {
+                lessonCard.dataset.completed = "true";
+                lessonCard.classList.add("is-completed");
+                const status = lessonCard.querySelector("[data-lesson-status]");
+                status.textContent = "Terminée";
+                status.className = "badge badge-completed";
+                lessonCard.querySelector("[data-complete-form]")?.remove();
+                const completedCount = document.querySelector("[data-completed-count]");
+                completedCount.textContent = Number(completedCount.textContent) + 1;
+                const nextLesson = [...document.querySelectorAll("[data-lesson-card]")]
+                    .find((card) => card.dataset.completed !== "true");
+                const nextLessonLink = document.querySelector("[data-next-lesson-link]");
+                if (nextLessonLink && nextLesson) {
+                    nextLessonLink.href = `#${nextLesson.id}`;
+                } else if (nextLessonLink) {
+                    const completionMessage = document.createElement("span");
+                    completionMessage.className = "progress-muted";
+                    completionMessage.textContent = "Bravo, toutes les leçons sont terminées !";
+                    nextLessonLink.replaceWith(completionMessage);
+                }
+            }
+            const courseStatus = document.querySelector("[data-course-status]");
+            const completed = result.status === "COMPLETED";
+            courseStatus.textContent = completed ? "Terminé" : "En cours";
+            courseStatus.className = `badge ${completed ? "badge-completed" : "badge-active"}`;
+            if (completed) {
+                showFeedback("Félicitations, vous avez terminé toutes les leçons de ce cours !", "success");
+            }
+        };
+        document.querySelectorAll("[data-lesson-video]").forEach((video) => {
+            let started = false;
+            let completionSent = false;
+            const announce = (message, state) => {
+                feedback.textContent = message;
+                feedback.dataset.state = state;
+            };
+            const send = async (action) => {
+                const response = await fetch(video.dataset.activityUrl, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": csrfToken(),
+                    },
+                    body: new URLSearchParams({ action }),
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Le suivi de cette leçon a échoué.");
+                }
+                if (action === "completed") {
+                    completionSent = true;
+                    updateCourseProgress(result);
+                    announce(result.message, "success");
+                } else {
+                    announce("Lecture enregistrée. Votre cours est prêt à reprendre ici.", "success");
+                }
+            };
+            video.addEventListener("play", () => {
+                if (started) return;
+                started = true;
+                send("started").catch((error) => {
+                    started = false;
+                    announce(error.message, "error");
+                });
+            });
+            video.addEventListener("ended", () => {
+                if (completionSent) return;
+                send("completed").catch((error) => {
+                    completionSent = false;
+                    announce(error.message, "error");
+                });
+            });
+        });
+        document.querySelectorAll("[data-complete-form]").forEach((form) => {
+            form.addEventListener("submit", (event) => {
+                const card = form.closest("[data-lesson-card]");
+                if (card?.dataset.completed === "true") {
+                    event.preventDefault();
+                    return;
+                }
+                const button = form.querySelector("button");
+                button.disabled = true;
+                button.textContent = "Enregistrement…";
+            });
+        });
+    })();
+</script>
 {% endblock %}

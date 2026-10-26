@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Quiz — {{ attempt.course.title }}{% endblock %}
+{% block extra_css %}{% include "progress/_styles.html" %}{% endblock %}
+
+{% block content %}
+<section class="progress-header">
+    {% if course_progress %}
+        <p><a href="{% url 'progress:detail' course_progress.pk %}">Retour au cours</a></p>
+    {% endif %}
+    <h1>Quiz : {{ attempt.course.title }}</h1>
+    <p class="progress-muted">{{ attempt.total_questions }} questions · {{ attempt.created_at|date:"d/m/Y H:i" }}</p>
+</section>
+
+{% if attempt.status == "COMPLETED" %}
+    <section class="progress-card" style="margin-bottom: 1.5rem;">
+        <h2>Votre score : {{ attempt.score }}/{{ attempt.total_questions }}</h2>
+        <p class="progress-muted">Le résultat a été calculé à partir des réponses conservées côté serveur.</p>
+    </section>
+{% endif %}
+
+<form method="post" class="progress-list">
+    {% csrf_token %}
+    {% for question in questions %}
+        <fieldset class="progress-card">
+            <legend><strong>{{ forloop.counter }}. {{ question.text }}</strong></legend>
+            {% for option in question.options %}
+                <label style="display: block; padding: 0.5rem 0;">
+                    <input type="radio" name="answer_{{ forloop.parentloop.counter0 }}"
+                           value="{{ option.index }}"
+                           {% if question.answer == option.index %}checked{% endif %}
+                           {% if attempt.status == "COMPLETED" %}disabled{% endif %}
+                           {% if attempt.status == "IN_PROGRESS" %}required{% endif %}>
+                    {{ option.text }}
+                    {% if attempt.status == "COMPLETED" and question.correct_index == option.index %}✓{% endif %}
+                </label>
+            {% endfor %}
+            {% if attempt.status == "COMPLETED" and question.explanation %}
+                <p class="progress-muted" style="margin-top: 0.75rem;">{{ question.explanation }}</p>
+            {% endif %}
+            {% if question.can_explain %}
+                <div class="quiz-ai-help">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-explain-button
+                            data-explain-url="{% url 'progress:explain_quiz_answer' attempt.pk forloop.counter0 %}">
+                        M’expliquer mon erreur avec l’IA
+                    </button>
+                    <p class="quiz-ai-feedback" data-explain-feedback role="status" aria-live="polite">
+                        {% if question.ai_explanation %}{{ question.ai_explanation }}{% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </fieldset>
+    {% endfor %}
+    {% if attempt.status == "IN_PROGRESS" %}
+        <button type="submit" class="btn btn-primary">Envoyer mes réponses</button>
+    {% else %}
+        <a href="{% url 'progress:history' %}" class="btn btn-secondary">Retour à l'historique</a>
+    {% endif %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const getCsrfToken = () => {
+            const input = document.querySelector("input[name=csrfmiddlewaretoken]");
+            if (input) return input.value;
+            const cookie = document.cookie.split("; ").find((item) => item.startsWith("csrftoken="));
+            return cookie ? decodeURIComponent(cookie.split("=")[1]) : "";
+        };
+
+        document.querySelectorAll("[data-explain-button]").forEach((button) => {
+            const feedback = button.parentElement.querySelector("[data-explain-feedback]");
+            if (feedback.textContent.trim()) {
+                button.textContent = "Réafficher l’explication";
+            }
+            button.addEventListener("click", async () => {
+                button.disabled = true;
+                button.textContent = "Génération de l’explication…";
+                feedback.textContent = "";
+                feedback.dataset.state = "";
+                try {
+                    const response = await fetch(button.dataset.explainUrl, {
+                        method: "POST",
+                        headers: {"X-CSRFToken": getCsrfToken()},
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || "L’explication n’a pas pu être générée.");
+                    }
+                    feedback.textContent = result.explanation;
+                    feedback.dataset.state = "success";
+                    button.textContent = "Réafficher l’explication";
+                } catch (error) {
+                    feedback.textContent = error.message || "Une erreur réseau est survenue.";
+                    feedback.dataset.state = "error";
+                    button.textContent = "Réessayer l’explication";
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

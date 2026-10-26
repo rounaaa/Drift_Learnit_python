@@ -38,6 +38,33 @@
     <div class="progress-card"><p class="progress-muted">Votre historique est vide pour ce filtre.</p></div>
 {% endif %}
 
+<section class="progress-card" style="margin-top: 1.5rem;">
+    <div class="progress-row">
+        <h2>Activités récentes</h2>
+        <a class="btn btn-secondary btn-sm" href="{% url 'progress:activity_history' %}">Tout l'historique</a>
+    </div>
+    {% if activities %}
+        <div class="progress-list">
+            {% for activity in activities %}
+                <article class="progress-row" style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <div>
+                        <strong>{{ activity.get_event_type_display }}</strong>
+                        {% if activity.course %}<span> — {{ activity.course.title }}</span>{% endif %}
+                        {% if activity.lesson %}<span> · {{ activity.lesson.title }}</span>{% endif %}
+                        {% if activity.video %}<span> · {{ activity.video.title }}</span>{% endif %}
+                        {% if activity.event_type == "QUIZ_COMPLETED" %}
+                            <span> · Score : {{ activity.details.score }}/{{ activity.details.total_questions }}</span>
+                        {% endif %}
+                    </div>
+                    <small class="progress-muted">{{ activity.created_at|date:"d/m/Y H:i" }}</small>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-muted">Aucune activité enregistrée pour le moment.</p>
+    {% endif %}
+</section>
+
 {% if is_paginated %}
     <nav class="progress-row" aria-label="Pagination" style="margin-top: 1.25rem;">
         {% if page_obj.has_previous %}<a class="btn btn-secondary" href="?{% if request.GET.status %}status={{ request.GET.status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Précédent</a>{% endif %}

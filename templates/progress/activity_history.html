@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Historique détaillé — LearnIt{% endblock %}
+{% block extra_css %}{% include "progress/_styles.html" %}{% endblock %}
+
+{% block content %}
+<section class="progress-header">
+    <p><a href="{% url 'progress:history' %}">← Historique des cours</a></p>
+    <h1>Historique détaillé des activités</h1>
+    <p class="progress-muted">Vos démarrages, leçons terminées, cours achevés et résultats de quiz.</p>
+</section>
+
+{% if activities %}
+    <div class="progress-list">
+        {% for activity in activities %}
+            <article class="progress-card progress-row">
+                <div>
+                    <strong>{{ activity.get_event_type_display }}</strong>
+                    {% if activity.course %}<span> — {{ activity.course.title }}</span>{% endif %}
+                    {% if activity.lesson %}<p class="progress-muted">{{ activity.lesson.title }}</p>{% endif %}
+                    {% if activity.video %}<p class="progress-muted">Vidéo : {{ activity.video.title }}</p>{% endif %}
+                    {% if activity.event_type == "QUIZ_COMPLETED" %}
+                        <p class="progress-muted">Score : {{ activity.details.score }}/{{ activity.details.total_questions }}</p>
+                    {% endif %}
+                    <small class="progress-muted">Source : {{ activity.get_source_display }}</small>
+                </div>
+                <time class="progress-muted" datetime="{{ activity.created_at|date:'c' }}">{{ activity.created_at|date:"d/m/Y H:i" }}</time>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <section class="progress-card"><p class="progress-muted">Aucune activité n'a encore été enregistrée.</p></section>
+{% endif %}
+
+{% if is_paginated %}
+    <nav class="progress-row" aria-label="Pagination" style="margin-top: 1.25rem;">
+        {% if page_obj.has_previous %}<a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}">Précédent</a>{% endif %}
+        <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}">Suivant</a>{% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

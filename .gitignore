@@ -25,7 +25,6 @@ wheels/
 .venv/
 venv/
 ENV/
-
 # Django
 *.log
 local_settings.py

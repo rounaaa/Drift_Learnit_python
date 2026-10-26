@@ -316,18 +316,26 @@
                         <li><a href="{% url 'videos:learner_feed' %}" class="nav-link">🎬 Fil de vidéos</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
                         <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
+                        <li><a href="{% url 'agent_chat' %}" class="nav-link" style="color: #8b5cf6; font-weight: 700;">🤖 Conseiller IA</a></li>
                         <li><a href="{% url 'progress:dashboard' %}" class="nav-link">📊 Ma progression</a></li>
                         <li><a href="{% url 'progress:history' %}" class="nav-link">🕘 Historique</a></li>
+
                     {% elif user.role == "CREATOR" %}
                         <!-- PAGES DU FORMATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes cours</a></li>
+                        <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
+                        <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                         <li><a href="{% url 'videos:my_videos' %}" class="nav-link">🎬 Mes vidéos</a></li>
                         <li><a href="{% url 'videos:video_create' %}" class="nav-link btn-create-course">+ Vidéo</a></li>
-                        <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
+                        
                     {% else %}
                         <!-- PAGES DE L'ADMINISTRATEUR -->
                         <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
                         <li><a href="{% url 'videos:category_list' %}" class="nav-link">🎬 Catégories vidéo</a></li>
+                        <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                        <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                         <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                         <li><a href="/admin/" class="nav-link" style="color: #6366f1; font-weight: 700;">🛡️ Admin Django</a></li>
                     {% endif %}
@@ -418,7 +426,7 @@
                     if (!data.tracked) return;
                     notify(data.message, true);
                 };
-                document.querySelectorAll("video").forEach((video) => {
+                document.querySelectorAll("video:not([data-lesson-video])").forEach((video) => {
                     const videoId = getVideoId(video);
                     if (!videoId) return;
                     video.addEventListener("play", () => {
