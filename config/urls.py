@@ -11,6 +11,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('courses.urls')),
+    path('', include('users.urls')),
+    path('', include('agent.urls')),
+    path('gamification/', include('gamification.urls')),
+    path('', include('django.contrib.auth.urls')),
 ]
 
 if settings.DEBUG:
