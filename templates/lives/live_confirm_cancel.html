@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Annuler le live — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card" style="max-width: 520px;">
+    <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 1rem; text-align: center;">Annuler le live</h1>
+    <p style="text-align: center; margin-bottom: 1.5rem; color: var(--text-muted);">
+        Confirmez-vous l'annulation de <strong>{{ live.title }}</strong> ?
+    </p>
+    <form method="POST">
+        {% csrf_token %}
+        <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{% url 'live_detail' live.pk %}" class="btn btn-secondary">Retour</a>
+            <button type="submit" class="btn btn-danger">Confirmer l'annulation</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

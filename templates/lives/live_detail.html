@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}{{ live.title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <div style="margin-bottom: 1rem;">
+        <a href="{% url 'live_list' %}" style="text-decoration: none; color: var(--text-muted); font-weight: 600;">← Retour aux lives</a>
+    </div>
+
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <div>
+                <span class="badge badge-{{ live.status|lower }}" style="margin-bottom: 0.5rem;">{{ live.get_status_display }}</span>
+                <h1 style="font-size: 2rem; font-weight: 800; margin: 0;">{{ live.title }}</h1>
+            </div>
+            {% if is_creator %}
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a href="{% url 'live_edit' live.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
+                    <a href="{% url 'live_cancel' live.pk %}" class="btn btn-danger btn-sm">Annuler</a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if live.description %}<p style="color: #334155; line-height: 1.7; white-space: pre-line; margin-bottom: 1.25rem;">{{ live.description }}</p>{% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2rem;">Date</div>
+                <strong>{{ live.start_at|date:"d/m/Y H:i" }}</strong>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2rem;">Durée</div>
+                <strong>{{ live.duration_minutes }} minutes</strong>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2rem;">Créateur</div>
+                <strong>{{ live.creator.username }}</strong>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2rem;">Cours</div>
+                <strong>{% if live.course %}{{ live.course.title }}{% else %}Aucun{% endif %}</strong>
+            </div>
+        </div>
+
+        {% if can_view_meeting_url %}
+            <div style="margin-bottom: 1rem;">
+                <strong>Réunion :</strong>
+                {% if live.meeting_url %}
+                    <a href="{{ live.meeting_url }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-left: 0.5rem;">Ouvrir le lien</a>
+                {% else %}
+                    <span style="color: var(--text-muted);">Aucun lien renseigné.</span>
+                {% endif %}
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted);">Le lien de réunion n'est visible que pour les inscrits, le créateur et l'admin.</p>
+        {% endif %}
+
+        {% if user.role == "LEARNER" and not user.is_superuser %}
+            {% if live.status == "SCHEDULED" %}
+                {% if user.live_registrations.all|length %}
+                    {% with reg=user.live_registrations.all|dictsort:'live_session_id' %}
+                        {% for registration in reg %}
+                            {% if registration.live_session_id == live.pk %}
+                                {% if registration.status == "REGISTERED" %}
+                                    <a href="{% url 'live_unregister' live.pk %}" class="btn btn-danger">Se désinscrire</a>
+                                {% else %}
+                                    <a href="{% url 'live_register' live.pk %}" class="btn btn-primary">Réinscrire</a>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                {% else %}
+                    <a href="{% url 'live_register' live.pk %}" class="btn btn-primary">S'inscrire</a>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% if is_creator %}
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0;">Participants</h2>
+                <a href="{% url 'live_attendance_list' live.pk %}" class="btn btn-secondary btn-sm">Voir les présences</a>
+            </div>
+            {% if registrations %}
+                <div style="display: grid; gap: 0.75rem;">
+                    {% for reg in registrations %}
+                        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div>
+                                <strong>{{ reg.user.username }}</strong>
+                                <div style="font-size: 0.82rem; color: var(--text-muted);">{{ reg.user.email }}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                <span class="badge badge-{{ reg.status|lower }}">{{ reg.get_status_display }}</span>
+                                <span style="font-size: 0.9rem; color: var(--text-muted);">Présence totale : {{ reg.total_duration|default:0 }}s</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); margin: 0;">Aucun participant inscrit pour l’instant.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

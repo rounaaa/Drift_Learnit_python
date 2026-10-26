@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Enregistrer une présence — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem; text-align: center;">Enregistrer une présence</h1>
+    <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">Live : <strong>{{ live.title }}</strong></p>
+    <form method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="form-error">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{% url 'live_attendance_list' live.pk %}" class="btn btn-secondary">Retour</a>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

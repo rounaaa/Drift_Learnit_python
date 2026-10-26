@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Lives — LearnIt{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Lives et sessions live</h1>
+            <p style="color: var(--text-muted);">Suivi des sessions en direct et programmées.</p>
+        </div>
+        {% if user.role == "CREATOR" or user.role == "ADMIN" or user.is_superuser %}
+            <a href="{% url 'live_create' %}" class="btn btn-primary">+ Créer un live</a>
+        {% endif %}
+    </div>
+
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+        <form method="GET" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <label for="status" class="form-label" style="margin: 0;">Filtre :</label>
+            <select name="status" id="status" class="form-select" style="max-width: 220px;">
+                <option value="">Tous</option>
+                {% for value, label in live_status_choices %}
+                    <option value="{{ value }}" {% if filter_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm">Appliquer</button>
+        </form>
+    </div>
+
+    {% if lives %}
+        <div style="display: grid; gap: 1.25rem;">
+            {% for live in lives %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                        <div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                                <span class="badge badge-{{ live.status|lower }}">{{ live.get_status_display }}</span>
+                                {% if live.course %}<span class="badge badge-published">{{ live.course.title }}</span>{% endif %}
+                            </div>
+                            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem;">
+                                <a href="{% url 'live_detail' live.pk %}" style="color: var(--text-main); text-decoration: none;">{{ live.title }}</a>
+                            </h2>
+                            <p style="color: var(--text-muted); margin-bottom: 0.5rem;">{{ live.start_at|date:"d/m/Y H:i" }} • {{ live.duration_minutes }} min • Créé par {{ live.creator.username }}</p>
+                        </div>
+                        <a href="{% url 'live_detail' live.pk %}" class="btn btn-secondary btn-sm">Voir le live</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center;">
+            <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Aucun live trouvé</h3>
+            <p style="color: var(--text-muted);">Il n’y a pas encore de session selon les filtres actifs.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

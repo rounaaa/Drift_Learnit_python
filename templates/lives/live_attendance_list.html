@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Présences — {{ live.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Présences — {{ live.title }}</h1>
+            <p style="color: var(--text-muted); margin: 0;">Suivi des temps de présence par participant.</p>
+        </div>
+        <a href="{% url 'live_attendance_create' live.pk %}" class="btn btn-primary">+ Enregistrer une présence</a>
+    </div>
+
+    {% if attendance_rows %}
+        <div style="display: grid; gap: 1rem;">
+            {% for item in attendance_rows %}
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                        <div>
+                            <strong>{{ item.registration.user.username }}</strong>
+                            <div style="font-size: 0.82rem; color: var(--text-muted);">{{ item.registration.user.email }}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <span class="badge badge-{{ item.registration.status|lower }}">{{ item.registration.get_status_display }}</span>
+                            <strong>Total : {{ item.total_duration }}s</strong>
+                        </div>
+                    </div>
+                    {% if item.attendances %}
+                        <div style="display: grid; gap: 0.5rem;">
+                            {% for attendance in item.attendances %}
+                                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                    <span>{{ attendance.joined_at|date:"d/m/Y H:i" }} → {% if attendance.left_at %}{{ attendance.left_at|date:"d/m/Y H:i" }}{% else %}Ouverte{% endif %}</span>
+                                    <span style="font-weight: 700;">{{ attendance.duration_seconds }}s</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="color: var(--text-muted); margin: 0;">Aucune présence enregistrée.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="background: white; border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 2rem; text-align: center;">
+            <p style="color: var(--text-muted); margin: 0;">Aucune inscription enregistrée pour ce live.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

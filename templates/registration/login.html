@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Connexion — LearnIt{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 4rem auto;">
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2.5rem 2rem; box-shadow: var(--shadow-md);">
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="background: linear-gradient(135deg, var(--primary), var(--accent)); width: 52px; height: 52px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.6rem; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">⚡</div>
+            <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem;">Connexion à LearnIt</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Entrez vos identifiants pour accéder à la plateforme</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="alert-box alert-error" style="margin-bottom: 1rem;">
+                ⚠️ Identifiants incorrects. Vérifiez votre nom d'utilisateur et votre mot de passe.
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div class="form-group">
+                <label class="form-label" for="id_username">Nom d'utilisateur</label>
+                <input type="text" id="id_username" name="username" class="form-control"
+                       placeholder="Ex: creator_user" autofocus required
+                       value="{{ form.username.value|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password">Mot de passe</label>
+                <input type="password" id="id_password" name="password" class="form-control"
+                       placeholder="Votre mot de passe" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 0.5rem; font-size: 1rem;">
+                🔐 Se connecter
+            </button>
+        </form>
+
+        <!-- LINK TO REGISTER -->
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: var(--text-muted);">
+            Pas encore de compte ?
+            <a href="{% url 'register' %}" style="color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 0.25rem;">
+                Créer un compte
+            </a>
+        </div>
+
+        <!-- ACCOUNTS INFO (test helper) -->
+        <div style="margin-top: 2rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; font-size: 0.83rem; color: var(--text-muted);">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-main);">👥 Comptes de test disponibles :</strong>
+            <div>🎓 <strong>learner_user</strong> — Rôle : Apprenant</div>
+            <div>👨‍🏫 <strong>creator_user</strong> — Rôle : Formateur</div>
+            <div>🛡️ <strong>admin_user</strong> — Rôle : Administrateur</div>
+            <div style="margin-top: 0.4rem; font-style: italic;">Mot de passe commun : <strong>LearnIt2026!</strong></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
