@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Supprimer {{ video.title }} — LearnIt{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem;">Supprimer la vidéo</h1>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Confirmez-vous la suppression de « <strong>{{ video.title }}</strong> » ? Cette action est irréversible.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+            <a href="{% url 'videos:video_detail' video.pk %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

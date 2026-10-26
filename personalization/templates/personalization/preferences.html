@@ -1,0 +1,52 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}Mes centres d'intérêt{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <div>
+    <h1 class="ps-pagehead__title">Mes centres d'intérêt</h1>
+    <p class="ps-pagehead__lead">Vos choix servent à vos recommandations et au filtre « Seulement mes centres d'intérêt » de la recherche.</p>
+  </div>
+</header>
+
+<form method="post" class="ps-prefs" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <fieldset class="ps-prefs__group">
+    <legend class="ps-prefs__legend">Quels sujets vous intéressent ?</legend>
+    <p class="ps-prefs__hint">Choisissez autant de sujets que vous voulez.</p>
+    {% if form.preferred_categories.errors %}<p class="ps-field-error">{{ form.preferred_categories.errors.0 }}</p>{% endif %}
+    <div class="ps-chips">
+      {% for checkbox in form.preferred_categories %}
+        <label class="ps-chip">
+          {{ checkbox.tag }}
+          <span>{{ checkbox.choice_label }}</span>
+        </label>
+      {% empty %}
+        <p class="ps-prefs__hint">Aucune catégorie n'existe encore.</p>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset class="ps-prefs__group">
+    <legend class="ps-prefs__legend">Quel est votre niveau ?</legend>
+    <p class="ps-prefs__hint">Les cours de ce niveau passent en premier dans vos recommandations.</p>
+    <div class="ps-levels">
+      {% for option in form.level_options %}
+        <label class="ps-levelcard">
+          <input type="radio" name="{{ form.preferred_level.html_name }}" value="{{ option.value }}" {% if option.checked %}checked{% endif %}>
+          <span class="ps-levelcard__label">{{ option.label }}</span>
+          <span class="ps-levelcard__help">{{ option.help }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="ps-prefs__actions">
+    <button type="submit" class="btn btn-primary">Enregistrer mes centres d'intérêt</button>
+    <a class="ps-linkbtn" href="{% url 'personalization:recommendations' %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

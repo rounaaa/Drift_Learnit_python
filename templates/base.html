@@ -370,7 +370,7 @@
     <header class="navbar-wrapper">
         <nav class="navbar">
             <div class="navbar-left">
-                <a href="{% url 'course_catalog' %}" class="brand-logo">
+                <a href="{% if user.is_authenticated and user.role == 'LEARNER' %}{% url 'videos:learner_feed' %}{% else %}{% url 'course_catalog' %}{% endif %}" class="brand-logo">
                     <img class="brand-badge" src="{% static 'images/learnit-logo.png' %}" alt="">
                     <span>Learn<span style="color: var(--primary);">It</span></span>
                 </a>
@@ -380,6 +380,9 @@
                             <!-- PAGES DE L'APPRENANT -->
                             <li><a href="{% url 'course_catalog' %}" class="nav-link">📖 Catalogue</a></li>
                             <li><a href="{% url 'my_enrollments' %}" class="nav-link">🎓 Mes inscriptions</a></li>
+                            <li><a href="{% url 'videos:learner_feed' %}" class="nav-link">🎬 Vidéos</a></li>
+                            <li><a href="{% url 'personalization:search' %}" class="nav-link">🔍 Recherche</a></li>
+                            <li><a href="{% url 'personalization:recommendations' %}" class="nav-link">✨ Pour vous</a></li>
                             <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                             <li><a href="{% url 'agent_chat' %}" class="nav-link" style="color: #8b5cf6; font-weight: 700;">🤖 Conseiller IA</a></li>
                             <li><a href="{% url 'gamification_dashboard' %}" class="nav-link" style="color: #f59e0b; font-weight: 700;">🏆 Classement & XP</a></li>
@@ -387,6 +390,9 @@
                             <!-- PAGES DU FORMATEUR -->
                             <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Mes formations</a></li>
                             <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                            <li><a href="{% url 'videos:my_videos' %}" class="nav-link">🎬 Mes vidéos</a></li>
+                            <li><a href="{% url 'videos:video_create' %}" class="nav-link">+ Vidéo</a></li>
+                            <li><a href="{% url 'personalization:search' %}" class="nav-link">🔍 Recherche</a></li>
                             <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                             <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                             <li><a href="{% url 'gamification_dashboard' %}" class="nav-link" style="color: #f59e0b; font-weight: 700;">🏆 Classement & XP</a></li>
@@ -394,6 +400,8 @@
                             <!-- PAGES DE L'ADMINISTRATEUR -->
                             <li><a href="{% url 'my_courses' %}" class="nav-link">📚 Tous les cours</a></li>
                             <li><a href="{% url 'course_create' %}" class="nav-link btn-create-course">+ Créer un cours</a></li>
+                            <li><a href="{% url 'videos:category_list' %}" class="nav-link">🎬 Catégories vidéo</a></li>
+                            <li><a href="{% url 'personalization:stats' %}" class="nav-link">🔍 Recherche & statistiques</a></li>
                             <li><a href="{% url 'agent_quiz' %}" class="nav-link" style="color: #4f46e5; font-weight: 700;">🎯 Quiz IA</a></li>
                             <li><a href="{% url 'course_catalog' %}" class="nav-link">Catalogue</a></li>
                             <li><a href="{% url 'gamification_dashboard' %}" class="nav-link" style="color: #f59e0b; font-weight: 700;">🏆 Classement & XP</a></li>

@@ -1,0 +1,20 @@
+{% extends "personalization/base.html" %}
+
+{% block page_title %}{% if is_new %}Nouvelle liste{% else %}Modifier « {{ watchlist.name }} »{% endif %}{% endblock %}
+
+{% block module_content %}
+<header class="ps-pagehead">
+  <h1 class="ps-pagehead__title">{% if is_new %}Nouvelle liste{% else %}Modifier la liste{% endif %}</h1>
+</header>
+
+<form method="post" class="ps-stack-form ps-stack-form--narrow" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="ps-notice ps-notice--error">{{ form.non_field_errors.0 }}</p>{% endif %}
+  {% include "personalization/_field.html" with field=form.name %}
+  {% include "personalization/_field.html" with field=form.description %}
+  <div class="ps-prefs__actions">
+    <button type="submit" class="btn btn-primary">{% if is_new %}Créer la liste{% else %}Enregistrer les modifications{% endif %}</button>
+    <a class="ps-linkbtn" href="{% if is_new %}{% url 'personalization:watchlist-list' %}{% else %}{% url 'personalization:watchlist-detail' watchlist.pk %}{% endif %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}
